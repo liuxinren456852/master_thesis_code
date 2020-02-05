@@ -24,10 +24,10 @@ png_map_reader <- function(mapname){
   map_dt   <- .png_map_to_df(mapname)
   
   # Does the affine transform from pixels to coordinates
-  map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pY,pX)], 1)) %*% map_trns)
+  map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
   
   # Adds X and Y to map data and removes pixelcoordinates
-  map_dt[, c("Y", "X") := map_xy][, c("pX", "pY") := NULL]
+  map_dt[, c("X", "Y") := map_xy][, c("pX", "pY") := NULL]
   setcolorder(map_dt, c("X", "Y", "R", "G", "B"))
   
   return(map_dt)
