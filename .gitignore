@@ -39,3 +39,7 @@ vignettes/*.pdf
 .Renviron
 *.Rproj
 *.log
+*.laz
+*.las
+*.pgw
+*.png
