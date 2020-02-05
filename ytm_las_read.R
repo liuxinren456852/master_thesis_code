@@ -23,7 +23,7 @@ library(data.table)
 dt_closest <- function(x, y, tol = 1.5){
   closepts <- as.matrix(ytm@data[X>x-tol & X<x+tol & Y>y-tol & Y<y+tol, .(X,Y,R,G,B)])
   closest <- which.min(dist(rbind(c(x,y), closepts[,1:2]))[1:nrow(closepts)])
-  closepts[closest,3:5]
+  c(x,y,closepts[closest,c3:5])
 }
 
 
