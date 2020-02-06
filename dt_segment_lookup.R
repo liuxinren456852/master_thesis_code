@@ -11,12 +11,13 @@ dt_closest <- function(xy, target_data, target_tol = 1){
                                       Y>xy[2]-target_tol &
                                       Y<xy[2]+target_tol,
                                     .(X,Y,R,G,B)])
-  if(dim(closepts)[1] == 0){
+  while(dim(closepts)[1] == 0 & target_tol < 16){
     # In the rare event that no points are within tolerance:
-    closepts <- as.matrix(target_data[X>xy[1]-target_tol*3 &
-                                        X<xy[1]+target_tol*3 &
-                                        Y>xy[2]-target_tol*3 &
-                                        Y<xy[2]+target_tol*3,
+    target_tol <- target_tol * 3
+    closepts <- as.matrix(target_data[X>xy[1]-target_tol &
+                                        X<xy[1]+target_tol &
+                                        Y>xy[2]-target_tol &
+                                        Y<xy[2]+target_tol,
                                       .(X,Y,R,G,B)])
   }
   # Calculate distance matrix for these points and get index of closest one
