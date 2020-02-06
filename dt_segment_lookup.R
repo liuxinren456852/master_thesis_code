@@ -41,7 +41,7 @@ seg_lookup_factory <- function(seg_source, seg_target, target_tol, fun){
   }
 }
 
-dt_lookup_factory <- function(map_grid, source_data, target_data, target_tol, fun){
+dt_lookup_factory <- function(map_grid, source_data, target_data, target_tol, fun, cl){
   # Creates a function subsets data for a segment and then runs closest lookup in those
   # data. For use in lapply.
   require(parallel)
@@ -64,7 +64,6 @@ dt_lookup_factory <- function(map_grid, source_data, target_data, target_tol, fu
     seg_lookup <- seg_lookup_factory(seg_source, seg_target, target_tol, fun)
 
     # Make cluster to speed up searching for values
-    cl <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
     looked_up <-parSapply(cl = cl, X = seq.int(1, nrow(seg_source)), FUN = seg_lookup)
     return(looked_up)
   }
