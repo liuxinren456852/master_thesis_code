@@ -1,4 +1,4 @@
-map_grid_maker <- function(map, seg_size=250, X="X", Y="Y"){
+map_grid_maker <- function(map, seg_size, X="X", Y="Y"){
   # Generate database of breakpoints for mapchunks of size seg_size^2
   # DB only includes area on map, not a multiple of seg_size
   
