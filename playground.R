@@ -5,11 +5,12 @@ if(length(args)==0){
   # Default values
   map_dir <- "~"
   seg_size <- 125
-} else {
-  for(i in 1:length(args)){
-    eval(parse(text=args[[i]]))
-  }
-}
+} 
+
+map_dir    <- args[[1]]
+seg_size   <- as.numeric(args[[2]])
+
+
 init_time <- Sys.time()
 write(paste("Started at", init_time),stdout())
 source("png_map_reader.R")
