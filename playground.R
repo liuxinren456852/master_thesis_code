@@ -59,3 +59,6 @@ write(paste("Result saved to disk.\nTotal time:", round(total_time, 2),
       stdout())
 stopCluster(cl)
 #load( paste0(map_dir, "/las_lookup.Rdata"))
+
+
+
