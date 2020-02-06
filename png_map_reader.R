@@ -27,9 +27,14 @@ png_map_reader <- function(mapname){
   map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
   
   # Adds X and Y to map data and removes pixelcoordinates
-  map_dt[, c("X", "Y") := map_xy][, c("pX", "pY") := NULL]
-  setcolorder(map_dt, c("X", "Y", "R", "G", "B"))
+  map_dt[, c("X", "Y") := map_xy][, c("pX", "pY") := NULL][, colour := rgb(map[,.(R,G,B)])]
+  setcolorder(map_dt, c("X", "Y", "R", "G", "B", "colour"))
   
   return(map_dt)
 }
 
+plot_png_map <- function(map, X="X", Y="Y", colour = "colour"){
+  require(ggplot2)
+  ggplot(map, aes_string(x = X, y = Y, colour)) +
+    geom_raster
+}
