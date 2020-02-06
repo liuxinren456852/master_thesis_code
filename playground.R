@@ -40,14 +40,15 @@ las_sfm_lookup <- dt_lookup_factory(map_grid, las@data, sfm@data, sfm_tol, dt_cl
 
 #las_lookup  <- lapply(X = seq.int(1,nrow(map_grid)), FUN = las_sfm_lookup)
 las_lookup <- rbindlist(lapply(X = seq.int(1,5), FUN = las_sfm_lookup))
+setnames(las_lookup, names(las_lookup), c("X", "Y", "R", "G", "B"))
 
 save(las_lookup, file = paste0(map_dir, "/las_lookup.Rdata"))
 
 end_time <- Sys.time()
 total_time <- difftime(end_time, init_time, "mins")
-record_time <- difftime(end_time, init_time, "secs")/nrow(las@data)*1000
-write(paste("Result saved to disk.\nTotal time:", round(total_time,1), 
-             "minutes.\nTime per 1000 points:", round(record_time,1), "seconds" ), 
+record_time <- difftime(end_time, init_time, "secs")/(nrow(las@data)/1000)
+write(paste("Result saved to disk.\nTotal time:", round(total_time,2), 
+             "minutes.\nTime per 1000 points:", round(record_time,3), "seconds" ), 
       stdout())
 stopCluster(cl)
 #load( paste0(map_dir, "/las_lookup.Rdata"))
