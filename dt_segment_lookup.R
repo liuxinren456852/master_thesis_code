@@ -73,6 +73,7 @@ dt_lookup_factory <- function(map_grid, source_data, target_data, target_tol, fu
 
     # Make cluster to speed up searching for values
     looked_up <-parSapply(cl = cl, X = seq.int(1, nrow(seg_source)), FUN = seg_lookup)
-    return(looked_up)
+    looked_up_dt <- transpose(as.data.table(looked_up))
+    return(looked_up_dt)
   }
 }
