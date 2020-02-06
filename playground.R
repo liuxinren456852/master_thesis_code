@@ -4,6 +4,7 @@
 #   print("No arguments supplied.")
 #   # Default values
 #   map_dir <- "~"
+#   seg_size <- 100
 # } else {
 #   for(i in 1:length(args)){
 #     eval(parse(text=args[[i]]))
@@ -17,8 +18,9 @@ source("dt_segment_lookup.R")
 
 # Read Omap-png and create grid for lookup from that
 map_dir    <- "~/kartor/kvarn_liten"
+seg_size   <- 100
 map        <- png_map_reader(paste0(map_dir, "/omap_ren"))
-map_grid   <- map_grid_maker(map)
+map_grid   <- map_grid_maker(map, seg_size = seg_size)
 
 # Read relevant LiDAR files
 las_tol    <- 0
@@ -29,8 +31,10 @@ sfm_tol    <- 1
 sfm        <- las_reader(map_dir, map_grid, "sfm", sfm_tol)
 
 # Process laslookup in sfm chunkwise
-las_sfm_lookup <- dt_lookup_factory(map_grid, las@data, sfm@data, sfm_tol, dt_closest)
+cl <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
+las_sfm_lookup <- dt_lookup_factory(map_grid, las@data, sfm@data, sfm_tol, dt_closest, cl)
 
-#lapply(X = seq.int(1,nrow(map_grid)), FUN = function(seg_no){
-las_lookup <- lapply(X = seq.int(1,4), FUN = las_sfm_lookup)
+las_lookup  <- lapply(X = seq.int(1,nrow(map_grid)), FUN = las_sfm_lookup)
+#las_lookup <- lapply(X = seq.int(1,5), FUN = las_sfm_lookup)
 
+save(las_lookup, file = paste0(map_dir, "/las_lookup.Rdata"))
