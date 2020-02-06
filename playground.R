@@ -18,8 +18,8 @@ source("map_grid_maker.R")
 source("las_reader.R")
 source("dt_segment_lookup.R")
 
-#map_dir    <- "~/kartor/kvarn_liten"
-#seg_size   <- 125
+map_dir    <- "~/LIU/kartor/kvarn_liten"
+seg_size   <- 125
 
 # Read Omap-png and create grid for lookup from that
 map        <- png_map_reader(paste0(map_dir, "/omap_ren"))
@@ -60,5 +60,18 @@ write(paste("Result saved to disk.\nTotal time:", round(total_time, 2),
 stopCluster(cl)
 #load( paste0(map_dir, "/las_lookup.Rdata"))
 
+cl <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
+las_map_lookup <- dt_lookup_factory(map_grid = map_grid, 
+                                    source_data = las_lookup,
+                                    source_var = c("X","Y","Z","Intensity", "R", "G", "B"), 
+                                    target_data = map, 
+                                    target_var = c("X", "Y", "colour"), 
+                                    target_tol = 1, fun = dt_closest, cl = cl)
 
+las_lookup_2 <- rbindlist(lapply(X = seq.int(1,4), FUN = las_map_lookup))
+setnames(las_lookup_2, c(names(las_lookup), "colour"))
+stopCluster(cl)
+save(las_lookup_2, file = paste0(map_dir, "/las_lookup_2.Rdata"))
+
+kolla upp pngquant för png-compression
 
