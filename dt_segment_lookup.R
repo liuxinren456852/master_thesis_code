@@ -11,6 +11,13 @@ dt_closest <- function(xy, target_data, target_tol = 1){
                                       Y>xy[2]-target_tol &
                                       Y<xy[2]+target_tol,
                                     .(X,Y,R,G,B)])
+  if(dim(closepts)[1] == 0){
+    closepts <- as.matrix(target_data[X>xy[1]-target_tol*3 &
+                                        X<xy[1]+target_tol*3 &
+                                        Y>xy[2]-target_tol*3 &
+                                        Y<xy[2]+target_tol*3,
+                                      .(X,Y,R,G,B)])
+  }
   # Calculate distance matrix for these points and get index of closest one
   closest <- which.min(dist(rbind(xy, closepts[,1:2]))[1:nrow(closepts)])
   # Return original coord along with merged data
