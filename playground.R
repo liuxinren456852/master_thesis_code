@@ -44,15 +44,15 @@ las_sfm_lookup <- dt_lookup_factory(map_grid = map_grid,
                                     target_tol = sfm_tol, fun = dt_closest, cl = cl)
 
 #las_lookup  <- lapply(X = seq.int(1,nrow(map_grid)), FUN = las_sfm_lookup)
-las_lookup <- rbindlist(lapply(X = seq.int(1,4), FUN = las_sfm_lookup))
-setnames(las_lookup, names(las_lookup), c("X", "Y", "Z", "Intensity", "R", "G", "B"))
+las_sfm_join <- rbindlist(lapply(X = seq.int(1,4), FUN = las_sfm_lookup))
+setnames(las_sfm_join, names(las_sfm_join), c("X", "Y", "Z", "Intensity", "R", "G", "B"))
 
-save(las_lookup, file = paste0(map_dir, "/las_lookup.Rdata"))
+save(las_sfm_join, file = paste0(map_dir, "/las_lookup.Rdata"))
 
 end_time <- Sys.time()
 total_time <- difftime(end_time, init_time, units = "mins")
-record_time <- difftime(end_time, init_time, units = "secs") / (nrow(las_lookup)/1000)
-time_record <- nrow(las_lookup) / as.numeric(difftime(end_time, init_time, units = "secs")) * 60
+record_time <- difftime(end_time, init_time, units = "secs") / (nrow(las_sfm_join)/1000)
+time_record <- nrow(las_sfm_join) / as.numeric(difftime(end_time, init_time, units = "secs")) * 60
 write(paste("Result saved to disk.\nTotal time:", round(total_time, 2), 
             "minutes.\nTime per 1K points:", round(record_time, 4), 
             "seconds\nRecords per minute:", round(time_record, 1)), 
@@ -62,16 +62,16 @@ stopCluster(cl)
 
 cl <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
 las_map_lookup <- dt_lookup_factory(map_grid = map_grid, 
-                                    source_data = las_lookup,
+                                    source_data = las_sfm_join,
                                     source_var = c("X","Y","Z","Intensity", "R", "G", "B"), 
                                     target_data = map, 
                                     target_var = c("X", "Y", "colour"), 
                                     target_tol = 1, fun = dt_closest, cl = cl)
 
-las_lookup_2 <- rbindlist(lapply(X = seq.int(1,4), FUN = las_map_lookup))
-setnames(las_lookup_2, c(names(las_lookup), "colour"))
+las_omap_join <- rbindlist(lapply(X = seq.int(1,4), FUN = las_map_lookup))
+setnames(las_omap_join, c(names(las_sfm_join), "colour"))
 stopCluster(cl)
-save(las_lookup_2, file = paste0(map_dir, "/las_lookup_2.Rdata"))
+save(las_omap_join, file = paste0(map_dir, "/las_lookup_2.Rdata"))
 
 kolla upp pngquant för png-compression
 
