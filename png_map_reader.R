@@ -26,10 +26,28 @@ png_map_reader <- function(mapname){
   # Does the affine transform from pixels to coordinates
   map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
   
-  # Adds X and Y to map data and removes pixelcoordinates
-  map_dt[, c("X", "Y") := map_xy][, c("pX", "pY") := NULL]
-  setcolorder(map_dt, c("X", "Y", "R", "G", "B"))
-  
+  # Adds X and Y to map data. Pixelcoords kept to enable plotting
+  map_dt[, c("X", "Y") := map_xy][, colour := rgb(map_dt[,.(R,G,B)])]
+  setcolorder(map_dt, c("X", "Y", "R", "G", "B", "colour", "pX", "pY"))
+  setkey(map_dt, X, Y)
   return(map_dt)
 }
 
+map_dt_plot <- function(map, xycol = c("pX", "pY", "colour")){
+  # Helper for plotting the map used
+  require("grid")
+  require("gridExtra")
+  # Due to transformation during read, order of Y is reversed.
+  oldkey <- key(map)
+  setkeyv(map, xycol[1:2])
+  # Using coordinates here will require massive memory... hence pX,pY
+  map_array <- array(dim = c(max(map[,(xycol[2]), with=FALSE]), 
+                             max(map[,(xycol[1]), with=FALSE]),
+                             3))
+  map_array[,,1] <- map[, R]
+  map_array[,,2] <- map[, G]
+  map_array[,,3] <- map[, B]
+  plot.new()
+  grid.raster(map_array)
+  setkeyv(map, oldkey)
+}

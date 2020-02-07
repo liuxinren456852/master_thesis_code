@@ -9,6 +9,7 @@ dt_closest <- function(xy, target_data, target_tol = 1){
   closepts <- as.matrix(target_data[X>xy[1]-target_tol &
                                       X<xy[1]+target_tol &
                                       Y>xy[2]-target_tol &
+<<<<<<< HEAD
                                       Y<xy[2]+target_tol,
                                     .(X,Y,R,G,B)])
   while(dim(closepts)[1] == 0 & target_tol < 16){
@@ -19,11 +20,23 @@ dt_closest <- function(xy, target_data, target_tol = 1){
                                         Y>xy[2]-target_tol &
                                         Y<xy[2]+target_tol,
                                       .(X,Y,R,G,B)])
+=======
+                                      Y<xy[2]+target_tol, ])#,
+                                    #..target_var])
+  if(dim(closepts)[1] == 0){
+    # In the rare event that no points are within tolerance:
+    closepts <- as.matrix(target_data[X>xy[1]-target_tol*3 &
+                                        X<xy[1]+target_tol*3 &
+                                        Y>xy[2]-target_tol*3 &
+                                        Y<xy[2]+target_tol*3, ])#,
+                                      #..target_var])
+>>>>>>> 68c01aaf4c820335812d68a51c7ae91751a6517a
   }
   # Calculate distance matrix for these points and get index of closest one
+  # Indexing at the end due to dist really beinga vector and diag is not included
   closest <- which.min(dist(rbind(xy, closepts[,1:2]))[1:nrow(closepts)])
   # Return original coord along with merged data
-  c(xy,closepts[closest,3:5])
+  c(xy,closepts[closest,-c(1,2)])
 }
 
 dt_sq_average <- function(xy, target_data, target_tol = 1){
@@ -33,24 +46,23 @@ dt_sq_average <- function(xy, target_data, target_tol = 1){
   closepts <- as.matrix(target_data[X>xy[1]-target_tol &
                                       X<xy[1]+target_tol &
                                       Y>xy[2]-target_tol &
-                                      Y<xy[2]+target_tol,
-                                    .(X,Y,R,G,B)])
+                                      Y<xy[2]+target_tol, ])
 
   # Return original coord along with merged data
-  c(xy,colMeans(closepts[closest,3:5]))
+  c(xy,colMeans(closepts[closest,-c(1,2)]))
 }
 
 
 seg_lookup_factory <- function(seg_source, seg_target, target_tol, fun){
   # Creates a function that runs dt_closest in the curent segment of data
   function(point_no){
-    fun(xy = unlist(seg_source[point_no, .(X,Y)]), #unlist to get it to vector
+    fun(xy = unlist(seg_source[point_no, ]), #unlist to get it to vector
         target_data = seg_target,
-        target_tol = target_tol)
+        target_tol  = target_tol)
   }
 }
 
-dt_lookup_factory <- function(map_grid, source_data, target_data, target_tol, fun, cl){
+dt_lookup_factory <- function(map_grid, source_data, source_var, target_data, target_var, target_tol, fun, cl){
   # Creates a function subsets data for a segment and then runs closest lookup in those
   # data. For use in lapply.
   require(parallel)
@@ -63,12 +75,12 @@ dt_lookup_factory <- function(map_grid, source_data, target_data, target_tol, fu
                                 X<=seg_limits$xmax &
                                 Y>=seg_limits$ymin &
                                 Y<=seg_limits$ymax,
-                              .(X,Y)]
+                              ..source_var]
     seg_target <- target_data[X>=seg_limits$xmin-sfm_tol &
                                 X<=seg_limits$xmax+sfm_tol &
                                 Y>=seg_limits$ymin-sfm_tol &
                                 Y<=seg_limits$ymax+sfm_tol,
-                              .(X,Y,R,G,B)]
+                              ..target_var]
 
     seg_lookup <- seg_lookup_factory(seg_source, seg_target, target_tol, fun)
 
