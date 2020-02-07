@@ -20,10 +20,10 @@ source("map_grid_maker.R")
 source("las_reader.R")
 source("dt_segment_lookup.R")
 source("omap_colour_codes.R")
-# 
-map_dir    <- "~/LIU/kartor/kvarn_liten"
-seg_size   <- 125
-runmode    <- 2
+# # 
+# map_dir    <- "~/LIU/kartor/kvarn_liten"
+# seg_size   <- 125
+# runmode    <- 2
 
 # Create set of true labels
 true_labels<- create_true_labels()

@@ -1,6 +1,6 @@
 create_true_labels <- function(){
   # Function for creating the set of true laels and their colours
-  require(data.table)
+  suppressPackageStartupMessages(require(data.table))
   .colour_matrix <- matrix(ncol = 4, byrow = TRUE,data = c(
     1.00,1.00,1.00,"forest",
     1.00,0.73,0.21,"open_ground",

@@ -59,7 +59,7 @@ seg_lookup_factory <- function(seg_source, seg_target, target_tol, fun){
 dt_lookup_factory <- function(map_grid, source_data, source_var, target_data, target_var, target_tol, fun, cl){
   # Creates a function subsets data for a segment and then runs closest lookup in those
   # data. For use in lapply.
-  require(parallel)
+  suppressPackageStartupMessages(require(parallel))
   function(seg_no){
     write(paste("Segment", seg_no, "started at", Sys.time()), stdout())
     seg_limits <- map_grid[seg_no, ]

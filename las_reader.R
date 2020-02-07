@@ -11,7 +11,7 @@ las_filter_string <- function(map_grid, tol=0){
 las_reader <- function(map_dir, map_grid, type, tol){
   # Function to read all .las/Z files in dir given type and filter
   # out only the relevant areas
-  require(lidR)
+  suppressPackageStartupMessages(require(lidR))
   if(type == "las"){
     path          <- paste0(map_dir, "/laserdata/")
     select_string <- "xyzi"

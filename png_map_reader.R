@@ -24,8 +24,8 @@ png_map_reader <- function(mapname, true_categories){
   # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
   # where X and Y are UTM-coordinates
   stopifnot(all(file.exists(paste0(mapname,c(".png", ".pgw")))))
-  require(png)
-  require(data.table)
+  suppressPackageStartupMessages(require(png))
+  suppressPackageStartupMessages(require(data.table))
   
   map_trns <- .png_worldfile_to_transform_matrix(mapname)
   map_dt   <- .png_map_to_df(mapname)
@@ -43,8 +43,8 @@ png_map_reader <- function(mapname, true_categories){
 
 map_dt_plot <- function(map, xycol = c("pX", "pY", "colour")){
   # Helper for plotting the map used
-  require("grid")
-  require("gridExtra")
+  suppressPackageStartupMessages(require("grid"))
+  suppressPackageStartupMessages(require("gridExtra"))
   # Due to transformation during read, order of Y is reversed.
   oldkey <- key(map)
   setkeyv(map, xycol[1:2])
