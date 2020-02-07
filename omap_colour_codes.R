@@ -1,27 +1,29 @@
-# Not to be rerun!
-stop("Don't! Will destroy class mapping file, only for documentation")
-# Copied from main file
-source("png_map_reader.R")
-map_dir    <- "~/kartor/kvarn_liten"
-map        <- png_map_reader(paste0(map_dir, "/omap_ren_raw"))
-# End of copyting
-maplevels <- data.table(col_code = unique(map$colour), name = NA_character_)
-setkey(maplevels, col_code)
-  #        col_code name
-  # 1:     #C1F9BA <NA>
-  # 2:     #848074 <NA>
-  # 3:     #FFDD9B <NA>
-  # 4:     #FFFFFF <NA>
-  # 5:     #0A0906 <NA>
-  # 6:     #28D2FE <NA>
-  # 7:     #FF08FF <NA>
-  # 8:     #FFBA37 <NA>
-
-ggplot(maplevels, aes(y=1:length(col_code), x=0, width = length(col_code), height = 1)) +
-  geom_tile(fill = maplevels$col_code, col = "black", size = rel(2)) +
-  geom_label(aes(label = col_code), size = rel(5)) +
-  theme_void()
-
-maplevels[, category := c("Forest", "Open_area", )]
+.colour_matrix <- matrix(ncol = 4, byrow = TRUE,data = c(
+  1.00,1.00,1.00,"forest",
+  1.00,0.73,0.21,"open_ground",
+  1.00,0.87,0.60,"dense_forest", #doublecheck!
+  0.50,0.50,0.50,"building",
+  1.00,0.00,1.00,"marsh",
+  0.13,0.82,1.00,"water",
+  0.24,1.00,0.09,"very_dense_forest", #doublecheck!
+  0.77,1.00,0.73,"easy_forest", #doublecheck!
+  0.91,0.65,0.45,"trail",
+  0.00,0.00,0.00,"road"
+))
 
 
+true_labels <- data.table(R = as.numeric(.colour_matrix[,1]),
+                          G = as.numeric(.colour_matrix[,2]),
+                          B = as.numeric(.colour_matrix[,3]),
+                          category = .colour_matrix[,4])
+true_labels[, colour := rgb(true_labels[,.(R,G,B)])]
+setkey(true_labels, colour)
+
+.plot_categories <- function(true_labels){
+  library(ggplot2)
+  ggplot(true_labels, aes(y=1:length(colour), x=0, width = 1, height = 1)) +
+    geom_tile(fill = true_labels$colour, col = "black", size = rel(1)) +
+    geom_label(aes(label = colour), size = rel(5), nudge_x = -.45,hjust = "inward") +
+    geom_label(aes(label = category), size = rel(5), nudge_x = .45, hjust="inward") +
+    theme_void()
+}
