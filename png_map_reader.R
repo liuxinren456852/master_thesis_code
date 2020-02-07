@@ -1,31 +1,31 @@
-png_map_reader <- function(mapname, true_categories){
-  # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
-  # where X and Y are UTM-coordinates
-  stopifnot(all(file.exists(paste0(mapname,c(".png", ".pgw")))))
-  
-  .png_worldfile_to_transform_matrix <- function(mapname){
-    # Reads worldfile into transformation matrix 
-    # Source: https://en.wikipedia.org/wiki/World_file
-    return(t(matrix(as.numeric(readLines(paste0(mapname,".pgw"))), ncol = 3)))
-  }
-  
-  .png_map_to_df <- function(mapname){
-    # Reads png-map into data.table
-    require(png)
-    require(data.table)
-    map_dt <- dcast(as.data.table(readPNG(paste0(mapname,".png"))), 
-                    V1 + V2 ~ V3, value.var = "value")
-    setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B", "A"))
-    return(map_dt)
-  }
-  
+.png_worldfile_to_transform_matrix <- function(mapname){
+  # Reads worldfile into transformation matrix 
+  # Source: https://en.wikipedia.org/wiki/World_file
+  return(t(matrix(as.numeric(readLines(paste0(mapname,".pgw"))), ncol = 3)))
+}
+
+.png_map_to_df <- function(mapname){
+  # Reads png-map into data.table
+  map_dt <- dcast(as.data.table(readPNG(paste0(mapname,".png"))), 
+                  V1 + V2 ~ V3, value.var = "value")
+  setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B", "A"))
+  return(map_dt)
+}
+
 .png_color_kmeans <- function(mapname, true_categories){
-  
+  # Forces colours of read png-map into the true colours, dealiasing the stat way!
   true_centers <- as.matrix(true_categories[, .(R,G,B)])
   pixel_kmeans <- kmeans(x = mapname[, .(R,G,B)], centers = true_centers)
   mapname[, category := true_categories[pixel_kmeans$cluster, category]]
   mapname[, cat_colour := true_categories[pixel_kmeans$cluster, colour]]
 }
+
+png_map_reader <- function(mapname, true_categories){
+  # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
+  # where X and Y are UTM-coordinates
+  stopifnot(all(file.exists(paste0(mapname,c(".png", ".pgw")))))
+  require(png)
+  require(data.table)
   
   map_trns <- .png_worldfile_to_transform_matrix(mapname)
   map_dt   <- .png_map_to_df(mapname)
