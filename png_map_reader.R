@@ -1,8 +1,6 @@
-png_map_reader <- function(mapname){
+png_map_reader <- function(mapname, true_categories){
   # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
   # where X and Y are UTM-coordinates
-  require(png)
-  require(data.table)
   stopifnot(all(file.exists(paste0(mapname,c(".png", ".pgw")))))
   
   .png_worldfile_to_transform_matrix <- function(mapname){
@@ -12,24 +10,33 @@ png_map_reader <- function(mapname){
   }
   
   .png_map_to_df <- function(mapname){
-    # Reads reduced quality png-map into data.table
+    # Reads png-map into data.table
+    require(png)
+    require(data.table)
     map_dt <- dcast(as.data.table(readPNG(paste0(mapname,".png"))), 
                     V1 + V2 ~ V3, value.var = "value")
-    setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B"))
+    setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B", "A"))
     return(map_dt)
   }
   
-  .png_color_kmeans <- function(mapname, colours)
+.png_color_kmeans <- function(mapname, true_categories){
+  
+  true_centers <- as.matrix(true_categories[, .(R,G,B)])
+  pixel_kmeans <- kmeans(x = mapname[, .(R,G,B)], centers = true_centers)
+  mapname[, category := true_categories[pixel_kmeans$cluster, category]]
+  mapname[, cat_colour := true_categories[pixel_kmeans$cluster, colour]]
+}
   
   map_trns <- .png_worldfile_to_transform_matrix(mapname)
   map_dt   <- .png_map_to_df(mapname)
+  .png_color_kmeans(map_dt, true_categories)
   
   # Does the affine transform from pixels to coordinates
   map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
   
   # Adds X and Y to map data. Pixelcoords kept to enable plotting
   map_dt[, c("X", "Y") := map_xy][, colour := rgb(map_dt[,.(R,G,B)])]
-  setcolorder(map_dt, c("X", "Y", "R", "G", "B", "colour", "pX", "pY"))
+  setcolorder(map_dt, c("X", "Y", "category", "R", "G", "B", "colour", "cat_colour", "pX", "pY"))
   setkey(map_dt, X, Y)
   return(map_dt)
 }
