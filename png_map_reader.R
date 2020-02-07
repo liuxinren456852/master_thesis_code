@@ -12,11 +12,15 @@ png_map_reader <- function(mapname){
   }
   
   .png_map_to_df <- function(mapname){
-    # Reads 4-channel png-map into data.table and drops alpha-channel
-    map_dt <- dcast(as.data.table(readPNG(paste0(mapname,".png"))), 
+    # Reduce quality using pngquant to get rid of colour gradients
+    de_qual_ext <- "_fs8.png"
+    de_qual_mapname <- paste0(mapname, de_qual_ext)
+    if(file.exists(de_qual_mapname)){ file.remove(de_qual_mapname) }
+    system(paste0("pngquant --quality 1-2 --ext _fs8.png ", mapname, ".png"))
+    # Reads reduced quality png-map into data.table
+    map_dt <- dcast(as.data.table(readPNG(de_qual_mapname)), 
                     V1 + V2 ~ V3, value.var = "value")
-    setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B", "A"))
-    map_dt[, A := NULL]
+    setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B"))
     return(map_dt)
   }
   
