@@ -17,12 +17,13 @@ source("png_map_reader.R")
 source("map_grid_maker.R")
 source("las_reader.R")
 source("dt_segment_lookup.R")
+source("omap_colour_codes.R")
 
 map_dir    <- "~/LIU/kartor/kvarn_liten"
 seg_size   <- 125
 
 # Read Omap-png and create grid for lookup from that
-map        <- png_map_reader(paste0(map_dir, "/omap_ren"))
+map        <- png_map_reader(paste0(map_dir, "/omap_ren"), true_labels)
 map_grid   <- map_grid_maker(map, seg_size = seg_size)
 
 # Read relevant LiDAR files
