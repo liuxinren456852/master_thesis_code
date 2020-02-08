@@ -32,4 +32,5 @@ vignettes/*.pdf
 *.las
 *.pgw
 *.png
+*.pdf
 data
