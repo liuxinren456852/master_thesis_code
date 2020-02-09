@@ -56,7 +56,8 @@ seg_lookup_factory <- function(seg_source, seg_target, target_tol, fun){
   }
 }
 
-dt_lookup_factory <- function(map_grid, source_data, source_var, target_data, target_var, target_tol, fun, cl){
+dt_lookup_factory <- function(map_grid, by, source_data, source_var, 
+                              target_data, target_var, target_tol, fun, cl){
   # Creates a function subsets data for a segment and then runs closest lookup in those
   # data. For use in lapply.
   suppressPackageStartupMessages(require(parallel))
@@ -69,18 +70,19 @@ dt_lookup_factory <- function(map_grid, source_data, source_var, target_data, ta
                                 X<=seg_limits$xmax &
                                 Y>=seg_limits$ymin &
                                 Y<=seg_limits$ymax,
-                              ..source_var]
+                              c(by, source_var), with = FALSE]
     seg_target <- target_data[X>=seg_limits$xmin-sfm_tol &
                                 X<=seg_limits$xmax+sfm_tol &
                                 Y>=seg_limits$ymin-sfm_tol &
                                 Y<=seg_limits$ymax+sfm_tol,
-                              ..target_var]
+                              c(by, target_var), with = FALSE]
 
     seg_lookup <- seg_lookup_factory(seg_source, seg_target, target_tol, fun)
 
     # Make cluster to speed up searching for values
     looked_up <-parSapply(cl = cl, X = seq.int(1, nrow(seg_source)), FUN = seg_lookup)
     looked_up_dt <- transpose(as.data.table(looked_up))
+    setnames(looked_up_dt, c(by, source_var, target_var))
     return(looked_up_dt)
   }
 }
