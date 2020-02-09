@@ -20,8 +20,9 @@ create_true_labels <- function(){
                             B = as.numeric(.colour_matrix[,3]),
                             category = .colour_matrix[,4])
   
-  true_labels[, colour := rgb(true_labels[, .(R,G,B)])]
+  true_labels[, c("colour", "id") := list(rgb(true_labels[, .(R,G,B)]), 1:.N)]
   setkey(true_labels, colour)
+  write.csv(true_labels[, .(category, id)], "true_labels.csv", row.names = FALSE)
   return(true_labels)
 }
 
