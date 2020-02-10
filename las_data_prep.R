@@ -92,4 +92,4 @@ save(las_omap_join, file = paste0(map_dir, "/las_lookup_2.Rdata"))
 timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
 
 seg_writer <- seg_list_writer_factory(output_dir, las_omap_join)
-lapply(1:length(X = seq.int(1,4)), seg_writer)
+invisible(lapply(1:length(x = seq.int(1,end_seg)), seg_writer))
