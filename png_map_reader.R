@@ -18,6 +18,7 @@
   pixel_kmeans <- kmeans(x = mapname[, .(R,G,B)], centers = true_centers)
   mapname[, category := true_categories[pixel_kmeans$cluster, category]]
   mapname[, cat_colour := true_categories[pixel_kmeans$cluster, colour]]
+  mapname[, cat_id := true_categories[pixel_kmeans$cluster, id]]
 }
 
 png_map_reader <- function(mapname, true_categories){
