@@ -42,21 +42,23 @@ png_map_reader <- function(mapname, true_categories){
   return(map_dt)
 }
 
-map_dt_plot <- function(map, xycol = c("pX", "pY", "colour")){
+map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour"){
   # Helper for plotting the map used
-  suppressPackageStartupMessages(require("grid"))
-  suppressPackageStartupMessages(require("gridExtra"))
+  # suppressPackageStartupMessages(require("grid"))
+  # suppressPackageStartupMessages(require("gridExtra"))
   # Due to transformation during read, order of Y is reversed.
   oldkey <- key(map)
-  setkeyv(map, xycol[1:2])
+  setkeyv(map, c(y,x))
+  colmat <- col2rgb(unlist(omap[, ..colour]))/255
   # Using coordinates here will require massive memory... hence pX,pY
-  map_array <- array(dim = c(max(map[,(xycol[2]), with=FALSE]), 
-                             max(map[,(xycol[1]), with=FALSE]),
+  map_array <- array(dim = c(max(map[,..x]), 
+                             max(map[,..y]),
                              3))
-  map_array[,,1] <- map[, R]
-  map_array[,,2] <- map[, G]
-  map_array[,,3] <- map[, B]
-  plot.new()
-  grid.raster(map_array)
+  map_array[,,1] <- colmat[1, ]
+  map_array[,,2] <- colmat[2, ]
+  map_array[,,3] <- colmat[3, ]
+  # plot.new()
+  # grid.raster(map_array)
+  imager::save.image(imager::as.cimg(map_array), paste0(colour, "_map.png"))
   setkeyv(map, oldkey)
 }
