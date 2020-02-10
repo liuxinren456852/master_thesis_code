@@ -34,3 +34,31 @@ create_true_labels <- function(){
     geom_label(aes(label = category), size = rel(5), nudge_x = .45, hjust="inward") +
     theme_void()
 }
+
+col_codes <- matrix(ncol = 3, byrow=TRUE, c(
+  000,  000,  000, 
+  100,  240,  255, 
+  020,  120,  200, 
+  150,  255,  138, 
+  051,  160,  044, 
+  251,  050,  153,  
+  227,  026,  040, 
+  253,  191,  111, 
+  255,  127,  000, 
+  220,  150,  230, 
+  106,  061,  154, 
+  255,  255,  255  
+  ))
+colnames(col_codes) <- c("R", "G", "B")
+
+round(as.matrix(dist(col_codes)))
+min(dist(col_codes))
+
+ccodes <- data.table(col_codes)[, ID := 1:.N][, HEX := rgb(R,G,B, maxColorValue = 255)]
+plotly::plot_ly(x=ccodes[,R], y=ccodes[,G], z=ccodes[,B], color=ccodes[,ID], mode="marker")
+ccodes[, category := c("roads", paste0("latent",0:9), "forest")]
+library(ggplot2)
+ggplot(ccodes, aes(x=ID, fill=category,y=0,height=1,width=1)) +
+  geom_tile(col="grey50") +
+  scale_fill_manual(values=setNames(ccodes$HEX,ccodes$category)) + 
+  theme_void()
