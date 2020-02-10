@@ -1,7 +1,7 @@
 seg_list_writer_factory <- function(output_dir, 
                                     data_list,
                                     data_vars = c("X","Y", "Z","Intensity", "R", "G", "B"), 
-                                    label_vars = "category"){
+                                    label_vars = "cat_id"){
   # Function for writing xyzdata.npy and labels.npy for each room in each area
   suppressPackageStartupMessages(require(RcppCNPy))
   seg_list_writer <- function(segment_id){
