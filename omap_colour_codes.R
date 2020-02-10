@@ -56,7 +56,9 @@ min(dist(col_codes))
 
 ccodes <- data.table(col_codes)[, ID := 1:.N][, HEX := rgb(R,G,B, maxColorValue = 255)]
 plotly::plot_ly(x=ccodes[,R], y=ccodes[,G], z=ccodes[,B], color=ccodes[,ID], mode="marker")
+
 ccodes[, category := c("roads", paste0("latent",0:9), "forest")]
+
 library(ggplot2)
 ggplot(ccodes, aes(x=ID, fill=category,y=0,height=1,width=1)) +
   geom_tile(col="grey50") +
