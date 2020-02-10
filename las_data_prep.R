@@ -1,16 +1,18 @@
 args <- commandArgs(TRUE)
 
 if(length(args)==0){
-  print("No arguments supplied.")
+  print("No arguments supplied. Using defaults!")
   # Default values
   map_dir    <- "~"
   seg_size   <- 125
-  runmode    <- "test"
-} 
-
-map_dir    <- args[[1]]
-seg_size   <- as.numeric(args[[2]])
-runmode    <- args[[3]]
+  runmode    <- 4
+  output_dir <- paste0(getwd(), "/area_output/")
+} else {
+  map_dir    <- args[[1]]
+  seg_size   <- as.numeric(args[[2]])
+  runmode    <- args[[3]]
+  output_dir <- args[[4]]
+}
 
 init_time_0 <- Sys.time()
 write(paste("Started at", init_time_0),stdout())
@@ -20,10 +22,14 @@ source("las_reader.R")
 source("dt_segment_lookup.R")
 source("omap_colour_codes.R")
 source("little_helpers.R")
-# # 
-# map_dir    <- "~/LIU/kartor/kvarn_liten"
-# seg_size   <- 125
-# runmode    <- 2
+#
+map_dir    <- "~/kartor/kvarn_liten"
+seg_size   <- 125
+runmode    <- 4
+output_dir <- paste0(getwd(), "/dataprep/kvarn_liten")
+
+# Ensure output directory exists
+if(!dir.exists(output_dir)) {dir.create(output_dir)}
 
 # Create set of true labels
 true_labels<- create_true_labels()
@@ -76,10 +82,14 @@ las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid,
                                      source_data = las_sfm_join,
                                      source_var = c("Z","Intensity", "R", "G", "B"), 
                                      target_data = omap, 
-                                     target_var = c("category"), 
+                                     target_var = c("cat_id"), 
                                      target_tol = 1, fun = dt_closest, cl = cl)
 
-las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
+#las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
+las_omap_join <- lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup)
 stopCluster(cl)
 save(las_omap_join, file = paste0(map_dir, "/las_lookup_2.Rdata"))
-timing_writer(init_time_2, Sys.time(), nrow(las_omap_join))
+timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
+
+seg_writer <- seg_list_writer_factory(output_dir, las_omap_join)
+lapply(1:length(X = seq.int(1,4)), seg_writer)
