@@ -36,18 +36,18 @@ create_true_labels <- function(){
 }
 
 col_codes <- matrix(ncol = 3, byrow=TRUE, c(
-  000,  000,  000, 
-  100,  240,  255, 
-  020,  120,  200, 
-  150,  255,  138, 
-  051,  160,  044, 
-  251,  050,  153,  
-  227,  026,  040, 
-  253,  191,  111, 
-  255,  127,  000, 
-  220,  150,  230, 
-  106,  061,  154, 
-  255,  255,  255  
+  000,  000,  000, #road
+  100,  240,  255, #water
+  020,  120,  200, #marsh
+  150,  255,  138, #openground
+  051,  160,  044, #denseforest
+  251,  050,  153, #building  
+  227,  026,  040, #trail
+ #253,  191,  111, #unused
+  255,  127,  000, #mediumforest
+  220,  150,  230, #unused
+  106,  061,  154, #mountain
+  255,  255,  255  #lightforest
   ))
 colnames(col_codes) <- c("R", "G", "B")
 
@@ -57,7 +57,7 @@ min(dist(col_codes))
 ccodes <- data.table(col_codes)[, ID := 1:.N][, HEX := rgb(R,G,B, maxColorValue = 255)]
 plotly::plot_ly(x=ccodes[,R], y=ccodes[,G], z=ccodes[,B], color=ccodes[,ID], mode="marker")
 
-ccodes[, category := c("roads", paste0("latent",0:9), "forest")]
+ccodes[, category := c("roads", "water","marsh", "opneground","denseforest","building","trail","unused1","mediumforest","unused2","mountain", "lightforest")]
 
 library(ggplot2)
 ggplot(ccodes, aes(x=ID, fill=category,y=0,height=1,width=1)) +
