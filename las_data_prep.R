@@ -23,19 +23,27 @@ source("dt_segment_lookup.R")
 source("omap_colour_codes.R")
 source("little_helpers.R")
 #
-map_dir    <- "~/kartor/kvarn_liten"
+map_dir    <- "~/LIU/kartor/"
 seg_size   <- 125
 runmode    <- 4
-output_dir <- paste0(getwd(), "/dataprep/kvarn_liten")
-
-# Ensure output directory exists
-if(!dir.exists(output_dir)) {dir.create(output_dir)}
+output_dir <- paste0(getwd(), "/dataprep/")
 
 # Create set of true labels
 true_labels<- create_true_labels()
 
+# Ensure output directories exists
+areas      <- dir(map_dir)
+areas      <- areas[!areas %in% c("laserdata", "ytmodell")]
+if(!dir.exists(output_dir)) {dir.create(output_dir)}
+for(area in areas){
+  curr_output <- paste0(output_dir, area, "/")
+  curr_input  <- paste0(map_dir, area, "/")
+  if(!dir.exists(curr_output)) {dir.create(curr_output)}
+}
+
 # Read Omap-png and create grid for lookup from that
-omap       <- png_map_reader(paste0(map_dir, "/omap_ren"), true_labels)
+mapname    <- dir(curr_input,".png$")
+omap       <- png_map_reader(paste0(curr_input, mapname), true_labels)
 omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
 
 # Read relevant LiDAR files
