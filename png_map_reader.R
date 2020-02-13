@@ -32,7 +32,7 @@ true_category_dist <- function(x) {
 png_map_reader <- function(mapfile, true_categories){
   # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
   # where X and Y are UTM-coordinates
-  mapname <- sub(pattern = ".png$", replacement = "", x = mapfile)
+  mapname <- sub(pattern = ".png$", replacement = "", x = mapfile) 
   stopifnot(all(file.exists(paste0(mapname,c(".png", ".pgw")))))
   suppressPackageStartupMessages(require(png))
   suppressPackageStartupMessages(require(data.table))
