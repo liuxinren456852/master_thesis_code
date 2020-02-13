@@ -21,16 +21,27 @@
   mapname[, cat_id := true_categories[pixel_kmeans$cluster, id]]
 }
 
-png_map_reader <- function(mapname, true_categories){
+true_category_dist <- function(x) {
+  which.min(pdist(unlist(x), true_labels[, .(R,G,B)])@dist)
+}
+
+true_category_dist <- function(x) {
+  sum(unlist(x))
+}
+
+png_map_reader <- function(mapfile, true_categories){
   # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
   # where X and Y are UTM-coordinates
+  mapname <- sub(pattern = ".png$", replacement = "", x = mapfile)
   stopifnot(all(file.exists(paste0(mapname,c(".png", ".pgw")))))
   suppressPackageStartupMessages(require(png))
   suppressPackageStartupMessages(require(data.table))
+  suppressPackageStartupMessages(require(pdist))
   
   map_trns <- .png_worldfile_to_transform_matrix(mapname)
   map_dt   <- .png_map_to_df(mapname)
-  .png_color_kmeans(map_dt, true_categories)
+  #map_dt[, cat := which.min(pdist(as.matrix(R,G,B), as.matrix(true_categories[,.(R,G,B)]))]
+  #.png_color_kmeans(map_dt, true_categories)
   
   # Does the affine transform from pixels to coordinates
   map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
