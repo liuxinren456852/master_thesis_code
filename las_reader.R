@@ -13,10 +13,10 @@ las_reader <- function(map_dir, map_grid, type, tol){
   # out only the relevant areas
   suppressPackageStartupMessages(require(lidR))
   if(type == "las"){
-    path          <- paste0(map_dir, "/laserdata/")
+    path          <- paste0(map_dir, "_laserdata/")
     select_string <- "xyzi"
   } else if(type == "sfm"){
-    path          <- paste0(map_dir, "/ytmodell/")
+    path          <- paste0(map_dir, "_ytmodell/")
     select_string <- "xyzRGB"
   }
   files         <- paste0(path, dir(path, ".la[sz]+$"))
