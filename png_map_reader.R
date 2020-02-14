@@ -40,14 +40,17 @@ png_map_reader <- function(mapfile, true_categories){
   
   map_trns <- .png_worldfile_to_transform_matrix(mapname)
   map_dt   <- .png_map_to_df(mapname)
-  #map_dt[, cat := which.min(pdist(as.matrix(R,G,B), as.matrix(true_categories[,.(R,G,B)]))]
-  #.png_color_kmeans(map_dt, true_categories)
+  # Find closest colour per pixel among true catgories
+  cat_dists<- apply(X = as.matrix(pdist(map_dt[,.(R,G,B)], true_categories[, .(R,G,B)])),
+                    MARGIN = 1, FUN = which.min)
   
-  # Does the affine transform from pixels to coordinates
+  # Do the affine transform from pixels to coordinates
   map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
   
   # Adds X and Y to map data. Pixelcoords kept to enable plotting
   map_dt[, c("X", "Y") := map_xy][, colour := rgb(map_dt[,.(R,G,B)])]
+  map_dt[, c("cat_colour") := true_categories[cat_dists, .(colour)]]
+  map_dt[, c("category") := cat_dists]
   setcolorder(map_dt, c("X", "Y", "category", "R", "G", "B", "colour", "cat_colour", "pX", "pY"))
   setkey(map_dt, X, Y)
   return(map_dt)
@@ -55,21 +58,18 @@ png_map_reader <- function(mapfile, true_categories){
 
 map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour"){
   # Helper for plotting the map used
-  # suppressPackageStartupMessages(require("grid"))
-  # suppressPackageStartupMessages(require("gridExtra"))
-  # Due to transformation during read, order of Y is reversed.
   oldkey <- key(map)
-  setkeyv(map, c(y,x))
-  colmat <- col2rgb(unlist(omap[, ..colour]))/255
+  setkeyv(map, c(x,y))
+  colmat <- col2rgb(unlist(map[, ..colour]))/255
   # Using coordinates here will require massive memory... hence pX,pY
-  map_array <- array(dim = c(max(map[,..x]), 
-                             max(map[,..y]),
+  map_array <- array(dim = c(max(map[,..y]), 
+                             max(map[,..x]),
                              3))
   map_array[,,1] <- colmat[1, ]
   map_array[,,2] <- colmat[2, ]
   map_array[,,3] <- colmat[3, ]
   # plot.new()
   # grid.raster(map_array)
-  imager::save.image(imager::as.cimg(map_array), paste0(colour, "_map.png"))
+  png::writePNG(map_array, paste0(colour, "_map.png"))
   setkeyv(map, oldkey)
 }
