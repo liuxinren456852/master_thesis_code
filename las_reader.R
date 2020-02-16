@@ -8,9 +8,9 @@ las_filter_string <- function(map_grid, tol=0){
   paste(xmin, xmax, ymin, ymax, sep = ", ")
 }
 
-las_reader <- function(map_dir, map_grid, type, tol){
+las_reader <- function(map_cat = NULL, map_dir = NULL, map_grid, type, tol){
   # Function to read all .las/Z files in dir given type and filter
-  # out only the relevant areas
+  # out only the relevant areas. Alternatively can read from a catalog.
   suppressPackageStartupMessages(require(lidR))
   if(type == "las"){
     path          <- paste0(map_dir, "_laserdata/")
@@ -21,7 +21,11 @@ las_reader <- function(map_dir, map_grid, type, tol){
   }
   files         <- paste0(path, dir(path, ".la[sz]+$"))
   filter_string <- las_filter_string(map_grid, tol = tol) 
-  lasdata       <- readLAS(files = files, select = select_string, filter = filter_string)
+  if(!is.null(map_cat)){
+    lasdata       <- readLAS(files = map_cat, select = select_string, filter = filter_string)
+  } else {
+    lasdata       <- readLAS(files = files, select = select_string, filter = filter_string)
+  }
   setkey(lasdata@data, X, Y) # To ensure indexing is done
   lasdata
 }
