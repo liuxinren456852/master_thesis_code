@@ -55,13 +55,16 @@ for(area in areas){
   if(!dir.exists(curr_output)) {dir.create(curr_output)}
   
   # Read Omap-png and create grid for lookup from that
-  mapname    <- dir(curr_source,".png$")
+  mapname    <- dir(curr_source,".png$") 
   omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), true_categories = true_labels)
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
+  omap_ext   <- raster::extent(c(range(omap[,X]), range(omap[, Y])))
+  curr_las_c <- catalog_intersect(las_cat, map_extent)
+  curr_sfm_c <- catalog_intersect(sfm_cat, map_extent)
   
   # Read relevant LiDAR files
   las_tol    <- 0
-  las        <- las_reader(las_cat, map_grid = omap_grid, type = "las", tol = las_tol)
+  las        <- las_reader(curr_las_c, map_grid = omap_grid, type = "las", tol = las_tol)
   
   # Read relevant surfance model files
   sfm_tol    <- 1
