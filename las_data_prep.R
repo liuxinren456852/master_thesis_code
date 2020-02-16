@@ -28,6 +28,7 @@ source("las_reader.R")
 source("dt_segment_lookup.R")
 source("omap_colour_codes.R")
 source("little_helpers.R")
+require(lidR)
 
 init_time_0<- Sys.time()
 source_dir <- opts$source_dir
@@ -35,8 +36,10 @@ output_dir <- opts$output_dir
 seg_size   <- opts$seg_size
 runmode    <- opts$runmode
 
-# Create set of true labels
+# Create set of true labels and catalogs of las and sfm-files
 true_labels<- create_true_labels()
+las_cat    <- catalog(paste0(source_dir, "_laserdata"))
+sfm_cat    <- catalog(paste0(source_dir, "_ytmodell"))
 
 # Traverse input dir and ensure output directories exists
 areas      <- dir(source_dir)
@@ -58,11 +61,11 @@ for(area in areas){
   
   # Read relevant LiDAR files
   las_tol    <- 0
-  las        <- las_reader(source_dir, omap_grid, "las", las_tol)
+  las        <- las_reader(las_cat, map_grid = omap_grid, type = "las", tol = las_tol)
   
   # Read relevant surfance model files
   sfm_tol    <- 1
-  sfm        <- las_reader(source_dir, omap_grid, "sfm", sfm_tol)
+  sfm        <- las_reader(sfm_cat, map_grid = omap_grid, type = "sfm", tol = sfm_tol)
   
   write(paste0("Prework done in ", 
                round(difftime(Sys.time(), area_init, units = "secs"),1), " s."),
