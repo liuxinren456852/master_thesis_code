@@ -28,7 +28,7 @@ source("las_reader.R")
 source("dt_segment_lookup.R")
 source("omap_colour_codes.R")
 source("little_helpers.R")
-require(lidR)
+suppressPackageStartupMessages(require(lidR))
 
 init_time_0<- Sys.time()
 source_dir <- opts$source_dir
@@ -47,6 +47,10 @@ areas      <- areas[!areas %in% c("_laserdata", "_ytmodell", "_other")]
 write(paste("Started at", init_time_0,"\nFound ", length(areas), "areas to process."),
       stdout())
 if(!dir.exists(output_dir)) {dir.create(output_dir)}
+
+area_extent <- data.table(matrix(nrow = 0, ncol = 6))
+setnames(area_extent, c("area", "xmin","xmax", "ymin", "ymax", "grp"))
+
 for(area in areas){
   area_init   <- Sys.time()
   write(paste0("Starting area ", area, " at ", area_init), stdout())
@@ -58,13 +62,16 @@ for(area in areas){
   mapname    <- dir(curr_source,".png$") 
   omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), true_categories = true_labels)
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
-  omap_ext   <- raster::extent(c(range(omap[,X]), range(omap[, Y])))
-  curr_las_c <- catalog_intersect(las_cat, map_extent)
-  curr_sfm_c <- catalog_intersect(sfm_cat, map_extent)
+  area_extent <- rbind(area_extent , t(c(area, range(omap[,X]), range(omap[, Y]), substr(area,1,5))), use.names = FALSE)
+}
+
+  omap_ext   <- raster::raster(raster::extent(c(range(omap[,X]), range(omap[, Y]))))
+  curr_las_c <- catalog_intersect(las_cat, omap_ext)
+  curr_sfm_c <- catalog_intersect(sfm_cat, omap_ext)
   
   # Read relevant LiDAR files
   las_tol    <- 0
-  las        <- las_reader(curr_las_c, map_grid = omap_grid, type = "las", tol = las_tol)
+  las        <- las_reader(las_cat, map_grid = omap_grid, type = "las", tol = las_tol)
   
   # Read relevant surfance model files
   sfm_tol    <- 1
@@ -91,7 +98,7 @@ for(area in areas){
                                       source_var = c("Z","Intensity"), 
                                       target_data = sfm@data, 
                                       target_var = c("R", "G", "B"), 
-                                      target_tol = sfm_tol, fun = dt_closest, cl = cl)
+                                      target_tol = sfm_tol, fun = .dt_closest, cl = cl)
   
   las_sfm_join <- rbindlist(lapply(X = seq.int(1, end_seg), FUN = las_sfm_lookup))
   stopCluster(cl)
@@ -106,7 +113,7 @@ for(area in areas){
                                        source_var = c("Z","Intensity", "R", "G", "B"), 
                                        target_data = omap, 
                                        target_var = c("category"), 
-                                       target_tol = 1, fun = dt_closest, cl = cl)
+                                       target_tol = 1, fun = .dt_closest, cl = cl)
   
   #las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
   las_omap_join <- lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup)
