@@ -52,8 +52,12 @@ for(area in areas){
   area_idx <- area_idx + 1
   area_init   <- Sys.time()
   write(paste0("Starting area ", area, " at ", area_init), stdout())
-  curr_output <- paste0(output_dir, "area_", area_idx , "/")
+  curr_output <- paste0(output_dir, "Area_", area_idx , "/")
   curr_source <- paste0(source_dir, area, "/")
+  if (file.exists(paste0(curr_output, ".area"))) {
+    write("Area done, skipping!", stdout())
+    next
+  }
   las_cat    <- catalog(paste0(curr_source, "_laserdata"))
   sfm_cat    <- catalog(paste0(curr_source, "_ytmodell"))
   if(!dir.exists(curr_output)) {dir.create(curr_output)}
@@ -89,7 +93,7 @@ for(area in areas){
   las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
                                       by = c("X", "Y"),
                                       source_data = las@data,
-                                      source_var = c("Z","Intensity"),  test of data only
+                                      source_var = c("Z","Intensity"),
                                       target_data = sfm@data, 
                                       target_var = c("R", "G", "B"), 
                                       target_tol = sfm_tol, fun = .dt_closest, cl = cl)
@@ -118,6 +122,7 @@ for(area in areas){
   seg_writer <- seg_list_writer_factory(output_dir = curr_output, 
                                         data_list = las_omap_join)
   invisible(lapply(1:length(x = seq.int(1,end_seg)), seg_writer))
+  file.create(paste0(curr_output, ".area"))
   timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
 }
 write(paste0(length(areas), " areas finished in ", 
