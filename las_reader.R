@@ -5,7 +5,8 @@ las_filter_string <- function(map_grid, tol=0){
   xmax <- paste("-drop_x_above", max(map_grid$xmax)+tol)
   ymin <- paste("-drop_y_below", min(map_grid$ymin)-tol)
   ymax <- paste("-drop_y_above", max(map_grid$ymax)+tol)
-  paste(xmin, xmax, ymin, ymax, sep = ", ")
+  zmax <- paste("-drop_z_above 200")
+  paste(xmin, xmax, ymin, ymax, zmax ,sep = ", ")
 }
 
 las_reader <- function(map_cat = NULL, map_dir = NULL, map_grid, type, tol){
