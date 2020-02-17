@@ -1,6 +1,6 @@
 seg_list_writer_factory <- function(output_dir, 
                                     data_list,
-                                    data_vars = c("X","Y", "Z", "R", "G", "B"), #"Intensity", "R", "G", "B"), 
+                                    data_vars = c("X","Y", "Z", "Intensity", "R", "G", "B"), 
                                     label_vars = "category"){
   # Function for writing xyzdata.npy and labels.npy for each room in each area
   suppressPackageStartupMessages(require(RcppCNPy))
