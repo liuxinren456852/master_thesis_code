@@ -32,8 +32,8 @@ timing_writer <- function(init_time, end_time, nobs){
     total_time <- difftime(end_time, init_time, units = "mins")
     record_time<- as.numeric(total_time) * 60 / (nobs/1000)
     time_record<- nobs / as.numeric(total_time)
-    write(paste("Result saved to disk.\nTotal time:", round(total_time, 2), 
+    write(paste("Stage complete.\nTotal time:", round(total_time, 2), 
                 "minutes.\nTime per 1K points:", round(record_time, 4), 
-                "seconds\nRecords per minute:", round(time_record, 1)), 
+                "seconds\nRecords per minute:", round(time_record, 1),"\n"), 
           stdout())
 }

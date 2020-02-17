@@ -14,7 +14,7 @@ option_list <- list(
   make_option(c("-s", "--seg_size"), type = "integer", default = 100,
               help = "Size of chunks to be processed and represent sub area [default %default]",
               dest = "seg_size"),
-  make_option(c("-r", "--runmode"), type = "character", default = "4",
+  make_option(c("-r", "--runmode"), type = "character", default = "7",
               help = "Maximum number of segments to run. Non-integer to run all [default %default]",
               dest = "runmode")
   )
@@ -28,6 +28,7 @@ source("las_reader.R")
 source("dt_segment_lookup.R")
 source("omap_colour_codes.R")
 source("little_helpers.R")
+source("seg_list_writer.R")
 suppressPackageStartupMessages(require(lidR))
 
 init_time_0<- Sys.time()
@@ -38,37 +39,30 @@ runmode    <- opts$runmode
 
 # Create set of true labels and catalogs of las and sfm-files
 true_labels<- create_true_labels()
-las_cat    <- catalog(paste0(source_dir, "_laserdata"))
-sfm_cat    <- catalog(paste0(source_dir, "_ytmodell"))
 
 # Traverse input dir and ensure output directories exists
 areas      <- dir(source_dir)
 areas      <- areas[!areas %in% c("_laserdata", "_ytmodell", "_other")]
+area_idx <- 0
 write(paste("Started at", init_time_0,"\nFound ", length(areas), "areas to process."),
       stdout())
 if(!dir.exists(output_dir)) {dir.create(output_dir)}
 
-area_extent <- data.table(matrix(nrow = 0, ncol = 6))
-setnames(area_extent, c("area", "xmin","xmax", "ymin", "ymax", "grp"))
-
 for(area in areas){
+  area_idx <- area_idx + 1
   area_init   <- Sys.time()
   write(paste0("Starting area ", area, " at ", area_init), stdout())
-  curr_output <- paste0(output_dir, area, "/")
+  curr_output <- paste0(output_dir, "area_", area_idx , "/")
   curr_source <- paste0(source_dir, area, "/")
+  las_cat    <- catalog(paste0(curr_source, "_laserdata"))
+  sfm_cat    <- catalog(paste0(curr_source, "_ytmodell"))
   if(!dir.exists(curr_output)) {dir.create(curr_output)}
   
   # Read Omap-png and create grid for lookup from that
   mapname    <- dir(curr_source,".png$") 
   omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), true_categories = true_labels)
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
-  area_extent <- rbind(area_extent , t(c(area, range(omap[,X]), range(omap[, Y]), substr(area,1,5))), use.names = FALSE)
-}
 
-  omap_ext   <- raster::raster(raster::extent(c(range(omap[,X]), range(omap[, Y]))))
-  curr_las_c <- catalog_intersect(las_cat, omap_ext)
-  curr_sfm_c <- catalog_intersect(sfm_cat, omap_ext)
-  
   # Read relevant LiDAR files
   las_tol    <- 0
   las        <- las_reader(las_cat, map_grid = omap_grid, type = "las", tol = las_tol)
@@ -95,7 +89,7 @@ for(area in areas){
   las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
                                       by = c("X", "Y"),
                                       source_data = las@data,
-                                      source_var = c("Z","Intensity"), 
+                                      source_var = c("Z","Intensity"),  test of data only
                                       target_data = sfm@data, 
                                       target_var = c("R", "G", "B"), 
                                       target_tol = sfm_tol, fun = .dt_closest, cl = cl)
@@ -110,7 +104,7 @@ for(area in areas){
   las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid, 
                                        by = c("X", "Y"),
                                        source_data = las_sfm_join,
-                                       source_var = c("Z","Intensity", "R", "G", "B"), 
+                                       source_var = c("Z", "Intensity", "R", "G", "B"), 
                                        target_data = omap, 
                                        target_var = c("category"), 
                                        target_tol = 1, fun = .dt_closest, cl = cl)
