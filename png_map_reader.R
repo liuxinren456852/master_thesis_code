@@ -12,23 +12,6 @@
   return(map_dt)
 }
 
-.png_color_kmeans <- function(mapname, true_categories){
-  # Forces colours of read png-map into the true colours, dealiasing the stat way!
-  true_centers <- as.matrix(true_categories[, .(R,G,B)])
-  pixel_kmeans <- kmeans(x = mapname[, .(R,G,B)], centers = true_centers)
-  mapname[, category := true_categories[pixel_kmeans$cluster, category]]
-  mapname[, cat_colour := true_categories[pixel_kmeans$cluster, colour]]
-  mapname[, cat_id := true_categories[pixel_kmeans$cluster, id]]
-}
-
-true_category_dist <- function(x) {
-  which.min(pdist(unlist(x), true_labels[, .(R,G,B)])@dist)
-}
-
-true_category_dist <- function(x) {
-  sum(unlist(x))
-}
-
 png_map_reader <- function(mapfile, true_categories){
   # Reads a georeferenced png-file into a data.table of X,Y,R,G,B values
   # where X and Y are UTM-coordinates
