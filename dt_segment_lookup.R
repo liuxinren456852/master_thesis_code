@@ -1,7 +1,7 @@
 # The below functions make heavy use of data.table and it's speed, don't even consider
 # rewriting this with dplyr, it takes forever to do a couple of million filter()-calls.
 
-dt_closest <- function(xy, target_data, target_tol = 1){
+.dt_closest <- function(xy, target_data, target_tol = 1){
   # Retrieves RGB-values from target data for point in target data closest to given
   # coordinates (implicit from source data).
 
@@ -25,7 +25,7 @@ dt_closest <- function(xy, target_data, target_tol = 1){
   c(xy,closepts[closest,-c(1,2)])
 }
 
-dt_sq_average <- function(xy, target_data, target_tol = 1){
+.dt_sq_average <- function(xy, target_data, target_tol = 1){
   # Retrieves average RGB-values from points in target data within target_tol distance
   # from given coordinates (implicit from source data).
   # Subset all points within distance target_tol from x,y
