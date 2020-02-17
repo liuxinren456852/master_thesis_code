@@ -38,3 +38,4 @@ data
 *.csv
 *.npy
 /dataprep/
+/area_output/
