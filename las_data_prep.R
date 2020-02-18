@@ -91,7 +91,7 @@ for(area in areas){
   seg_grp    <- 1
   
   while (seg_grp <= end_seg_grp){
-    curr_grp    <- unlist(map_grid[rowgrp == seg_grp, rownum])
+    curr_grp    <- unlist(omap_grid[rowgrp == seg_grp, rownum])
     # Process laslookup in sfm
     init_time_1 <- Sys.time()
     cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
@@ -116,7 +116,7 @@ for(area in areas){
                                          source_var = c("Z", "Intensity", "R", "G", "B"), 
                                          target_data = omap, 
                                          target_var = c("category"), 
-                                         target_tol = 1, fun = .dt_closest, cl = cl)
+                                         target_tol = 5, fun = .dt_closest, cl = cl)
     
     #las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
     las_omap_join <- lapply(X = curr_grp, FUN = las_omap_lookup)
@@ -129,7 +129,7 @@ for(area in areas){
                                           seg_grp = seg_grp)
     invisible(lapply(seq.int(1,length(las_omap_join)), seg_writer))
     
-    timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
+    timing_writer(init_time_2, Sys.time(), sum(sapply(las_omap_join, nrow)))
     alarm()
     seg_grp    <- seg_grp + 1 
   }
