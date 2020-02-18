@@ -75,8 +75,9 @@ for(area in areas){
   sfm_tol    <- 1
   sfm        <- las_reader(sfm_cat, map_grid = omap_grid, type = "sfm", tol = sfm_tol)
   alarm()
-  write(paste0("Prework done in ", 
-               round(difftime(Sys.time(), area_init, units = "secs"),1), " s."),
+  write(paste("Prework done in", 
+               round(difftime(Sys.time(), area_init, units = "secs"),1), "s.\n", 
+               nrow(las@data), "points to look up using", nrow(omap_grid), "segments.\n"),
         stdout())
   
   # To allow for running test mode with fewer segments, try and cast runmode as integer
@@ -85,46 +86,54 @@ for(area in areas){
                                         nrow(omap_grid),
                                         min(as.integer(runmode), nrow(omap_grid))))
   
-  #write(paste(nrow(las@data),"points to be looked up using", end_seg, "segments" ), stdout())
+  omap_grid  <- omap_grid[rownum <= end_seg, ]
+  end_seg_grp<- max(omap_grid[, rowgrp])
+  seg_grp    <- 1
   
-  # Process laslookup in sfm chunkwise
-  init_time_1 <- Sys.time()
-  cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
-  las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
-                                      by = c("X", "Y"),
-                                      source_data = las@data,
-                                      source_var = c("Z","Intensity"),
-                                      target_data = sfm@data, 
-                                      target_var = c("R", "G", "B"), 
-                                      target_tol = sfm_tol, fun = .dt_closest, cl = cl)
-  
-  las_sfm_join <- rbindlist(lapply(X = seq.int(1, end_seg), FUN = las_sfm_lookup))
-  stopCluster(cl)
-  timing_writer(init_time_1, Sys.time(), nrow(las_sfm_join))
-  
-  # Process las-lookup in omap
-  init_time_2 <- Sys.time()
-  cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
-  las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid, 
-                                       by = c("X", "Y"),
-                                       source_data = las_sfm_join,
-                                       source_var = c("Z", "Intensity", "R", "G", "B"), 
-                                       target_data = omap, 
-                                       target_var = c("category"), 
-                                       target_tol = 1, fun = .dt_closest, cl = cl)
-  
-  #las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
-  las_omap_join <- lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup)
-  stopCluster(cl)
-  # save(las_omap_join, file = paste0(source_dir, "/las_lookup_2.Rdata"))
-  #timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
-  
-  seg_writer <- seg_list_writer_factory(output_dir = curr_output, 
-                                        data_list = las_omap_join)
-  invisible(lapply(1:length(x = seq.int(1,end_seg)), seg_writer))
+  while (seg_grp <= end_seg_grp){
+    curr_grp    <- unlist(map_grid[rowgrp == seg_grp, rownum])
+    # Process laslookup in sfm
+    init_time_1 <- Sys.time()
+    cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
+    las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
+                                        by = c("X", "Y"),
+                                        source_data = las@data,
+                                        source_var = c("Z","Intensity"),
+                                        target_data = sfm@data, 
+                                        target_var = c("R", "G", "B"), 
+                                        target_tol = sfm_tol, fun = .dt_closest, cl = cl)
+    
+    las_sfm_join <- rbindlist(lapply(X = curr_grp, FUN = las_sfm_lookup))
+    stopCluster(cl)
+    timing_writer(init_time_1, Sys.time(), nrow(las_sfm_join))
+    
+    # Process las-lookup in omap
+    init_time_2 <- Sys.time()
+    cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
+    las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid, 
+                                         by = c("X", "Y"),
+                                         source_data = las_sfm_join,
+                                         source_var = c("Z", "Intensity", "R", "G", "B"), 
+                                         target_data = omap, 
+                                         target_var = c("category"), 
+                                         target_tol = 1, fun = .dt_closest, cl = cl)
+    
+    #las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
+    las_omap_join <- lapply(X = curr_grp, FUN = las_omap_lookup)
+    stopCluster(cl)
+    # save(las_omap_join, file = paste0(source_dir, "/las_lookup_2.Rdata"))
+    #timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
+    
+    seg_writer <- seg_list_writer_factory(output_dir = curr_output, 
+                                          data_list = las_omap_join,
+                                          seg_grp = seg_grp)
+    invisible(lapply(seq.int(1,length(las_omap_join)), seg_writer))
+    
+    timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
+    alarm()
+    seg_grp    <- seg_grp + 1 
+  }
   file.create(paste0(curr_output, ".area"))
-  timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
-  alarm()
   write(paste0("Area finished in ", 
                round(difftime(Sys.time(), area_init, units = "mins"),1), " min.\n\n"),
         stdout())
