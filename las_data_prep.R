@@ -66,7 +66,21 @@ for(area in areas){
   mapname    <- dir(curr_source,".png$") 
   omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), true_categories = true_labels)
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
+  
+  # To allow for running test mode with fewer segments, try and cast runmode as integer
+  # If possible only run that many segments, else run all.
+  end_seg    <- suppressWarnings(ifelse(is.na(as.integer(runmode)), 
+                                        nrow(omap_grid),
+                                        min(as.integer(runmode), nrow(omap_grid))))
+  
+  omap_grid  <- omap_grid[rownum <= end_seg, ]
+  end_seg_grp<- max(omap_grid[, rowgrp])
 
+  
+  done_seg   <- dir(paste0(output_dir, "Area_", area_idx))
+  done_seg_id<- as.numeric(sub(x = done_seg, pattern="segment_", replacement = "")) -10
+  omap_grid  <- omap_grid[!(rownum %in% done_seg_id),]
+  seg_grp    <- min(omap_grid[, rowgrp])
   # Read relevant LiDAR files
   las_tol    <- 0
   las        <- las_reader(las_cat, map_grid = omap_grid, type = "las", tol = las_tol)
@@ -79,16 +93,6 @@ for(area in areas){
                round(difftime(Sys.time(), area_init, units = "secs"),1), "s.\n", 
                nrow(las@data), "points to look up using", nrow(omap_grid), "segments.\n"),
         stdout())
-  
-  # To allow for running test mode with fewer segments, try and cast runmode as integer
-  # If possible only run that many segments, else run all.
-  end_seg    <- suppressWarnings(ifelse(is.na(as.integer(runmode)), 
-                                        nrow(omap_grid),
-                                        min(as.integer(runmode), nrow(omap_grid))))
-  
-  omap_grid  <- omap_grid[rownum <= end_seg, ]
-  end_seg_grp<- max(omap_grid[, rowgrp])
-  seg_grp    <- 1
   
   while (seg_grp <= end_seg_grp){
     curr_grp    <- unlist(omap_grid[rowgrp == seg_grp, rownum])

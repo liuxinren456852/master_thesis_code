@@ -67,7 +67,7 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
   suppressPackageStartupMessages(require(parallel))
   function(seg_no){
     write(paste("Segment", seg_no, "started at", Sys.time()), stdout())
-    seg_limits <- map_grid[seg_no, ]
+    seg_limits <- map_grid[rownum == seg_no, ]
 
     # Create  temporary data sets for source and target
     seg_source <- source_data[X>=seg_limits$xmin &
