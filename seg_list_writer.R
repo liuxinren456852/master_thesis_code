@@ -12,6 +12,6 @@ seg_list_writer_factory <- function(output_dir,
     npySave(paste0(seg_dir, "xyzrgb.npy"), as.matrix(data_list[[segment_id]][, ..data_vars]))
     npySave(paste0(seg_dir, "label.npy"), as.matrix(data_list[[segment_id]][, ..label_vars]))
     file.create(paste0(seg_dir, ".labels"))
-    write(paste0("Segment ", segment_id, " saved."))
+    write(paste0("Segment ", segment_id, " saved."), stdout())
     }
 }
