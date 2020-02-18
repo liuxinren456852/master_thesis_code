@@ -27,8 +27,8 @@ create_true_labels <- function(){
   library(ggplot2)
   ggplot(true_labels, aes(y=1:length(colour), x=0, width = 1, height = 1)) +
     geom_tile(fill = true_labels$colour, col = "black", size = rel(1)) +
-    geom_label(aes(label = colour), size = rel(5), nudge_x = -.45,hjust = "inward") +
-    geom_label(aes(label = category), size = rel(5), nudge_x = .45, hjust="inward") +
+    geom_label(aes(label = colour, family ="serif"), size = rel(3), nudge_x = -.45,hjust = "inward") +
+    geom_label(aes(label = category, family = "serif"), size = rel(3), nudge_x = .45, hjust="inward", ) +
     theme_void()
 }
 
