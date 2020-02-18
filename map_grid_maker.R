@@ -12,10 +12,12 @@ map_grid_maker <- function(map, seg_size, X="X", Y="Y"){
   
   xseq <- .dim_to_seq(X)
   yseq <- .dim_to_seq(Y)
+  xsize <- max(xseq) - min(xseq)
+  ysize <- max(yseq) - min(yseq)
   
   # Create separate grids for min/max coord and return their bind
   startgrid <- expand.grid(xmin = xseq[-length(xseq)], ymin = yseq[-length(yseq)])
   endgrid <- expand.grid(xmax = xseq[-1], ymax = yseq[-1])
-  
+  write(paste("Map is",round(xsize), "times", round(ysize), "m or", round(xsize*ysize/10^6,2), "sq.km."), stdout())
   cbind(startgrid, endgrid)
 }
