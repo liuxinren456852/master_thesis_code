@@ -74,7 +74,7 @@ for(area in areas){
   # Read relevant surfance model files
   sfm_tol    <- 1
   sfm        <- las_reader(sfm_cat, map_grid = omap_grid, type = "sfm", tol = sfm_tol)
-  
+  alarm()
   write(paste0("Prework done in ", 
                round(difftime(Sys.time(), area_init, units = "secs"),1), " s."),
         stdout())
@@ -124,6 +124,10 @@ for(area in areas){
   invisible(lapply(1:length(x = seq.int(1,end_seg)), seg_writer))
   file.create(paste0(curr_output, ".area"))
   timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
+  alarm()
+  write(paste0("Area finished in ", 
+               round(difftime(Sys.time(), area_init, units = "mins"),1), " min.\n\n"),
+        stdout())
 }
 write(paste0(length(areas), " areas finished in ", 
              round(difftime(Sys.time(), init_time_0, units = "mins"),1), " min."),
