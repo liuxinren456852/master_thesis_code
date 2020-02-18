@@ -88,6 +88,6 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
     looked_up_dt <- transpose(as.data.table(looked_up))
     setnames(looked_up_dt, c(by, source_var, target_var))
     # Return only rows that aren't missing info. 
-    return(looked_up_dt[complete.cases(loked_up_dt[,target_var]),])
+    return(looked_up_dt[complete.cases(looked_up_dt[,..target_var]),])
   }
 }
