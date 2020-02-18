@@ -21,8 +21,12 @@
   # Calculate distance matrix for these points and get index of closest one
   # Indexing at the end due to dist really beinga vector and diag is not included
   closest <- which.min(dist(rbind(xy, closepts[,1:2]))[1:nrow(closepts)])
-  # Return original coord along with merged data
-  c(xy,closepts[closest,-c(1,2)])
+  # Return original coord along with merged data or NA of missing (yes xy-width is hardcoded...)
+  if(length(closest)==0){
+    return(c(xy, rep(NA, ncol(closepts)-2)))
+  } else {
+    return(c(xy,closepts[closest,-c(1,2)]))
+  }
 }
 
 .dt_sq_average <- function(xy, target_data, target_tol = 1){
@@ -71,10 +75,10 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
                                 Y>=seg_limits$ymin &
                                 Y<=seg_limits$ymax,
                               c(by, source_var), with = FALSE]
-    seg_target <- target_data[X>=seg_limits$xmin-sfm_tol &
-                                X<=seg_limits$xmax+sfm_tol &
-                                Y>=seg_limits$ymin-sfm_tol &
-                                Y<=seg_limits$ymax+sfm_tol,
+    seg_target <- target_data[X>=seg_limits$xmin-target_tol &
+                                X<=seg_limits$xmax+target_tol &
+                                Y>=seg_limits$ymin-target_tol &
+                                Y<=seg_limits$ymax+target_tol,
                               c(by, target_var), with = FALSE]
 
     seg_lookup <- seg_lookup_factory(seg_source, seg_target, target_tol, fun)
@@ -83,6 +87,7 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
     looked_up <-parSapply(cl = cl, X = seq.int(1, nrow(seg_source)), FUN = seg_lookup)
     looked_up_dt <- transpose(as.data.table(looked_up))
     setnames(looked_up_dt, c(by, source_var, target_var))
-    return(looked_up_dt)
+    # Return only rows that aren't missing info. 
+    return(looked_up_dt[complete.cases(loked_up_dt[,target_var]),])
   }
 }
