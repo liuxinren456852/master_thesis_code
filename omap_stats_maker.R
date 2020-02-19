@@ -7,7 +7,7 @@ option_list <- list(
   make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/omap_stats/"),
               help = "Directory where to output treated files. [default %default]",
               dest = "output_dir"),
-  make_option(c("-s", "--seg_size"), type = "integer", default = 100,
+  make_option(c("-s", "--seg_size"), type = "integer", default = 120,
               help = "Size of chunks to be processed and represent sub area [default %default]",
               dest = "seg_size")
   )
@@ -32,8 +32,8 @@ true_labels<- create_true_labels()
 areas      <- dir(source_dir)
 areas      <- areas[!areas %in% c("_laserdata", "_ytmodell", "_other")]
 area_idx   <- 0
-area_stats <- data.table::data.table(matrix(nrow = 0, ncol = nrow(true_labels)+3))
-setnames(area_stats, c(true_labels$category, "xsize", "ysize", "size"))
+area_stats <- data.table::data.table(matrix(nrow = 0, ncol = nrow(true_labels)+4))
+setnames(area_stats, c(true_labels$category, "xsize", "ysize", "size", "seg_count"))
 
 if(!dir.exists(output_dir)) {dir.create(output_dir)}
 
@@ -61,7 +61,8 @@ for(area in areas){
                       t(c(table(map_count), 
                           xsize = xsize, 
                           ysize = ysize, 
-                          size = xsize*ysize)))
+                          size = xsize*ysize,
+                          seg_count = nrow(omap_grid))))
 }
 
 area_stats <- rbind(area_stats, t(colSums(area_stats)))
