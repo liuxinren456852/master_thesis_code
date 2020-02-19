@@ -38,21 +38,3 @@ png_map_reader <- function(mapfile, true_categories){
   setkey(map_dt, X, Y)
   return(map_dt)
 }
-
-map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour"){
-  # Helper for plotting the map used
-  oldkey <- key(map)
-  setkeyv(map, c(x,y))
-  colmat <- col2rgb(unlist(map[, ..colour]))/255
-  # Using coordinates here will require massive memory... hence pX,pY
-  map_array <- array(dim = c(max(map[,..y]), 
-                             max(map[,..x]),
-                             3))
-  map_array[,,1] <- colmat[1, ]
-  map_array[,,2] <- colmat[2, ]
-  map_array[,,3] <- colmat[3, ]
-  # plot.new()
-  # grid.raster(map_array)
-  png::writePNG(map_array, paste0(colour, "_map.png"))
-  setkeyv(map, oldkey)
-}
