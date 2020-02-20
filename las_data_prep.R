@@ -122,9 +122,9 @@ for(area in areas){
                                         target_var = c("R", "G", "B"), 
                                         target_tol = sfm_tol, fun = .dt_closest, cl = cl)
     
-    las_sfm_join <- rbindlist(lapply(X = curr_grp, FUN = las_sfm_lookup))
+    las_sfm_join <- lapply(X = curr_grp, FUN = las_sfm_lookup)
     stopCluster(cl)
-    timing_writer(init_time_1, Sys.time(), nrow(las_sfm_join))
+    timing_writer(init_time_1, Sys.time(), sum(sapply(las_sfm_join, nrow)))
     
     # Process las-lookup in omap
     init_time_2 <- Sys.time()
@@ -156,6 +156,7 @@ for(area in areas){
   write(paste0("Area finished in ", 
                round(difftime(Sys.time(), area_init, units = "mins"),1), " min.\n\n"),
         stdout())
+  gc()
 }
 write(paste0(length(areas), " areas finished in ", 
              round(difftime(Sys.time(), init_time_0, units = "mins"),1), " min."),
