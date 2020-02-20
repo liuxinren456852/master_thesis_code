@@ -9,7 +9,7 @@ __all__ = ['PointNet']
 class PointNet(nn.Module):
     blocks = ((64, 3, None), (128, 1, None), (1024, 1, None))
 
-    def __init__(self, num_classes, extra_feature_channels=6, width_multiplier=1):
+    def __init__(self, num_classes, extra_feature_channels=7, width_multiplier=1): #extra  channel features ändrat 19/2
         super().__init__()
         self.in_channels = extra_feature_channels + 3
 

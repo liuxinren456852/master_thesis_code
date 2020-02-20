@@ -1,6 +1,6 @@
 from utils.config import Config, configs
 
-configs.seed = 1588147245
+configs.seed = 831117
 configs.deterministic = False
 
 # data configs
