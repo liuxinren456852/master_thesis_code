@@ -5,12 +5,15 @@ option_list <- list(
   #             help="Print extra output [default]"),
   # make_option(c("-q", "--quietly"), action="store_false", 
   #             dest="verbose", help="Print little output"),
-  make_option(c("-m", "--source_dir"), type="character", default="~/kartor/", 
+  make_option(c("-m", "--map_source"), type = "character", default="~/kartor/", 
               help="Directory where source maps are located as subfolders [default %default]",
-              dest = "source_dir"),
+              dest = "map_source"),
   make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/area_output/"),
               help = "Directory where to output treated files. [default %default]",
               dest = "output_dir"),
+  make_option(c("-l", "--las_source"), type = "character", default = "~/laslager/",
+              help = "Directory where lasfiles are located [default %default]",
+              dest = "las_source"),
   make_option(c("-s", "--seg_size"), type = "integer", default = 100,
               help = "Size of chunks to be processed and represent sub area [default %default]",
               dest = "seg_size"),
@@ -32,8 +35,9 @@ source("seg_list_writer.R")
 suppressPackageStartupMessages(require(lidR))
 
 init_time_0<- Sys.time()
-source_dir <- opts$source_dir
+map_source <- opts$map_source
 output_dir <- opts$output_dir
+las_source <- opts$las_source
 seg_size   <- opts$seg_size
 runmode    <- opts$runmode
 
@@ -41,35 +45,43 @@ runmode    <- opts$runmode
 true_labels<- create_true_labels()
 
 # Traverse input dir and ensure output directories exists
-areas      <- dir(source_dir)
+areas      <- dir(map_source)
 areas      <- areas[!areas %in% c("_laserdata", "_ytmodell", "_other")]
-area_idx <- 0
+main_areas <- substr(areas,1,5)
+area_idx   <- 0
+las_zlim   <- read.delim(paste0(las_source,"zlim.txt"))
 write(paste("Started at", init_time_0,"\nFound ", length(areas), "areas to process."),
       stdout())
 if(!dir.exists(output_dir)) {dir.create(output_dir)}
 
 for(area in areas){
-  area_idx <- area_idx + 1
+  # Setup area specific variabels and check area is done already
+  area_idx    <- area_idx + 1
+  main_area   <- main_areas[area_idx]
   area_init   <- Sys.time()
   write(paste0("Starting area ", area, " at ", area_init), stdout())
   curr_output <- paste0(output_dir, "Area_", area_idx , "/")
-  curr_source <- paste0(source_dir, area, "/")
+  curr_map_sc <- paste0(map_source, area, "/")
+  curr_las_sc <- paste0(las_source, main_area, "/")
   if (file.exists(paste0(curr_output, ".area"))) {
     write("Area done, skipping!", stdout())
     next
   }
-  las_cat    <- catalog(paste0(curr_source, "_laserdata"))
-  sfm_cat    <- catalog(paste0(curr_source, "_ytmodell"))
-  if(!dir.exists(curr_output)) {dir.create(curr_output)}
+  las_cat     <- catalog(paste0(curr_las_sc, "laserdata"))
+  sfm_cat     <- catalog(paste0(curr_las_sc, "ytmodell"))
+  curr_las_zlim <- unlist(las_zlim[las_zlim$main_area==main_area,c(2,3)])
+  if(length(curr_las_zlim)==0) { curr_las_zlim <- setNames(c(0,250),c("min", "max")) }
+  if(!dir.exists(curr_output)) { dir.create(curr_output) }
   
   # Read Omap-png and create grid for lookup from that
-  mapname    <- dir(curr_source,".png$") 
-  omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), true_categories = true_labels)
-  omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
+  mapname     <- dir(curr_map_sc,".png$") 
+  omap        <- png_map_reader(mapfile = paste0(curr_map_sc, mapname), 
+                                true_categories = true_labels)
+  omap_grid   <- map_grid_maker(omap, seg_size = seg_size)
   
   # To allow for running test mode with fewer segments, try and cast runmode as integer
   # If possible only run that many segments, else run all.
-  end_seg    <- suppressWarnings(ifelse(is.na(as.integer(runmode)), 
+  end_seg     <- suppressWarnings(ifelse(is.na(as.integer(runmode)), 
                                         nrow(omap_grid),
                                         min(as.integer(runmode), nrow(omap_grid))))
   
@@ -81,13 +93,16 @@ for(area in areas){
   done_seg_id<- as.numeric(sub(x = done_seg, pattern="segment_", replacement = "")) -10
   omap_grid  <- omap_grid[!(rownum %in% done_seg_id),]
   seg_grp    <- min(omap_grid[, rowgrp])
+  
   # Read relevant LiDAR files
   las_tol    <- 0
-  las        <- las_reader(las_cat, map_grid = omap_grid, type = "las", tol = las_tol)
+  las        <- las_reader(las_cat, map_grid = omap_grid, select_string = "i", 
+                           tol = las_tol, zlim = curr_las_zlim)
   
   # Read relevant surfance model files
   sfm_tol    <- 1
-  sfm        <- las_reader(sfm_cat, map_grid = omap_grid, type = "sfm", tol = sfm_tol)
+  sfm        <- las_reader(sfm_cat, map_grid = omap_grid, select_string = "*", 
+                           tol = sfm_tol, zlim = curr_las_zlim)
   alarm()
   write(paste("Prework done in", 
                round(difftime(Sys.time(), area_init, units = "secs"),1), "s.\n", 
