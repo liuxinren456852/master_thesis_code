@@ -19,7 +19,10 @@ option_list <- list(
               dest = "seg_size"),
   make_option(c("-r", "--runmode"), type = "character", default = "7",
               help = "Maximum number of segments to run. Non-integer to run all [default %default]",
-              dest = "runmode")
+              dest = "runmode"),
+  make_option(c("-c", "--cores"), type = "integer", default = 6,
+              help = "Number of cores to use [default %default]",
+              dest = "num_cores")
   )
 
 opt_parser <- OptionParser(option_list=option_list);
@@ -40,6 +43,11 @@ output_dir <- opts$output_dir
 las_source <- opts$las_source
 seg_size   <- opts$seg_size
 runmode    <- opts$runmode
+num_cores  <- opts$num_cores
+
+# To normalize intensity and RGB-values to [0,1]
+rgb_max    <- 2^16
+intens_max <- 255
 
 # Create set of true labels and catalogs of las and sfm-files
 true_labels<- create_true_labels()
@@ -98,11 +106,13 @@ for(area in areas){
   las_tol    <- 0
   las        <- las_reader(las_cat, map_grid = omap_grid, select_string = "i", 
                            tol = las_tol, zlim = curr_las_zlim)
+  las@data[, Intensity := Intensity / intens_max]
   
   # Read relevant surfance model files
   sfm_tol    <- 1
   sfm        <- las_reader(sfm_cat, map_grid = omap_grid, select_string = "*", 
                            tol = sfm_tol, zlim = curr_las_zlim)
+  sfm@data[, R := R / rgb_max][, G := G / rgb_max][, B := B / rgb_max]
   alarm()
   write(paste("Prework done in", 
                round(difftime(Sys.time(), area_init, units = "secs"),1), "s.\n", 
@@ -113,7 +123,8 @@ for(area in areas){
     curr_grp    <- unlist(omap_grid[rowgrp == seg_grp, rownum])
     # Process laslookup in sfm
     init_time_1 <- Sys.time()
-    cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
+    cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2)-1)
+
     las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
                                         by = c("X", "Y"),
                                         source_data = las@data,
@@ -121,34 +132,26 @@ for(area in areas){
                                         target_data = sfm@data, 
                                         target_var = c("R", "G", "B"), 
                                         target_tol = sfm_tol, fun = .dt_closest, cl = cl)
-    
-    las_sfm_join <- lapply(X = curr_grp, FUN = las_sfm_lookup)
-    stopCluster(cl)
-    timing_writer(init_time_1, Sys.time(), sum(sapply(las_sfm_join, nrow)))
-    
-    # Process las-lookup in omap
-    init_time_2 <- Sys.time()
-    cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2))
-    las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid, 
+
+    las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid,
                                          by = c("X", "Y"),
                                          source_data = las_sfm_join,
-                                         source_var = c("Z", "Intensity", "R", "G", "B"), 
-                                         target_data = omap, 
-                                         target_var = c("category"), 
+                                         source_var = c("Z", "Intensity", "R", "G", "B"),
+                                         target_data = omap,
+                                         target_var = c("category"),
                                          target_tol = 5, fun = .dt_closest, cl = cl)
-    
-    #las_omap_join <- rbindlist(lapply(X = seq.int(1,end_seg), FUN = las_omap_lookup))
-    las_omap_join <- lapply(X = curr_grp, FUN = las_omap_lookup)
-    stopCluster(cl)
-    # save(las_omap_join, file = paste0(source_dir, "/las_lookup_2.Rdata"))
-    #timing_writer(init_time_2, Sys.time(), nrow(las_sfm_join))
-    
-    seg_writer <- seg_list_writer_factory(output_dir = curr_output, 
+
+    seg_writer <- seg_list_writer_factory(output_dir = curr_output,
                                           data_list = las_omap_join,
                                           seg_grp = seg_grp)
+
+    las_sfm_join <- lapply(X = curr_grp, FUN = las_sfm_lookup)
+    las_omap_join <- lapply(X = curr_grp, FUN = las_omap_lookup)
     invisible(lapply(seq.int(1,length(las_omap_join)), seg_writer))
-    
-    timing_writer(init_time_2, Sys.time(), sum(sapply(las_omap_join, nrow)))
+
+    stopCluster(cl)
+
+    timing_writer(init_time_1, Sys.time(), seg_grp, sum(sapply(las_omap_join, nrow)))
     alarm()
     seg_grp    <- seg_grp + 1 
   }
