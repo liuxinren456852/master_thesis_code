@@ -33,7 +33,7 @@ vignettes/*.pdf
 *.pgw
 *.png
 *.pdf
-data
+/data
 *.Rdata
 *.csv
 *.npy
