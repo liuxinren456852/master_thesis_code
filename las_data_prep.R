@@ -123,7 +123,7 @@ for(area in areas){
     curr_grp    <- unlist(omap_grid[rowgrp == seg_grp, rownum])
     # Process laslookup in sfm
     init_time_1 <- Sys.time()
-    cl         <- parallel::makeForkCluster(floor(parallel::detectCores()/2)-1)
+    cl         <- parallel::makeForkCluster(min(floor(parallel::detectCores())-1, num_cores))
 
     las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
                                         by = c("X", "Y"),
