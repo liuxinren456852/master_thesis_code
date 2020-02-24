@@ -90,13 +90,16 @@ def prepare_label(data_dir, output_dir):
 def main():
     default_data_dir = 'area_output'
     default_output_dir = 'area_output'
+    default_h5output_dir = 'h5_output' #tillagt för att få ut h5filerna separat
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data', dest='data_dir', default=default_data_dir,
                         help=f'Path to S3DIS data (default is {default_data_dir})')
     parser.add_argument('-f', '--folder', dest='output_dir', default=default_output_dir,
                         help=f'Folder to write labels (default is {default_output_dir})')
-    parser.add_argument('--max_num_points', '-m', help='Max point number of each sample', type=int, default=65536) #ändrat för färre segment
-    parser.add_argument('--block_size', '-b', help='Block size', type=float, default=125) # lower resolution
+    parser.add_argument('-h', '--h5folder', dest='h5output_dir', default=default_h5output_dir,
+                        help=f'Folder to write h5-files (default is {default_h5output_dir})')
+    parser.add_argument('--max_num_points', '-m', help='Max point number of each sample', type=int, default=4096) #ändrat för färre segment
+    parser.add_argument('--block_size', '-b', help='Block size', type=float, default=20) # lower resolution
     parser.add_argument('--grid_size', '-g', help='Grid size', type=float, default=0.03)
     parser.add_argument('--save_ply', '-s', help='Convert .pts to .ply', action='store_true')
 
@@ -120,12 +123,13 @@ def main():
     areas.remove("true_labels.csv")
     for area_idx in range(1, len(areas)+1): # Loopar genom areornas
         folder = os.path.join(root, 'Area_%d' % area_idx) # Sökväg till areans målmapp
+        h5folder = os.path.join(root, 'Area_%d' % area_idx) # Tillagt för att få ut h5filerna nån annanstans
         datasets = sorted([dataset for dataset in os.listdir(folder)])
         # Tillagt för att ta hand om R's kontrollfil
         if ".area" in datasets :
             datasets.remove(".area")
         for dataset_idx, dataset in enumerate(datasets): # för varje rum...
-            dataset_marker = os.path.join(folder, dataset, '.dataset') # kollar om .dataset-filen finns och skippar rummet isåfall
+            dataset_marker = os.path.join(h5folder, dataset, '.dataset') # kollar om .dataset-filen finns och skippar rummet isåfall
             if os.path.exists(dataset_marker):
                 print(f'{datetime.now()}-{folder}/{dataset} already processed, skipping')
                 continue
@@ -251,6 +255,7 @@ def main():
                     block_rgb = rgb[point_indices]
                     block_labels = labels[point_indices]
                     x, y, z = np.split(block_points, (1, 2), axis=-1)
+                    # Normaliserar så att xyz hamnar i [0,1]
                     norm_x = x / max_room_x
                     norm_y = y / max_room_y
                     norm_z = z / max_room_z
@@ -275,7 +280,7 @@ def main():
                         if ((idx + 1) % batch_size == 0) or \
                                 (block_idx == idx_last_non_empty_block and block_split_idx == block_split_num - 1):
                             item_num = idx_in_batch + 1
-                            filename_h5: Any = os.path.join(folder, dataset, f'{offset_name}_{idx_h5:d}.h5')
+                            filename_h5: Any = os.path.join(h5folder, dataset, f'{offset_name}_{idx_h5:d}.h5')
                             print(f'{datetime.now()}-Saving {filename_h5}...')
 
                             file = h5py.File(filename_h5, 'w')

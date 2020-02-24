@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.optim as optim
 
-from datasets.s3dis import S3DIS
+from datasets.terrain import TERRAIN
 from meters.s3dis import MeterS3DIS
 from evaluate.s3dis.eval import evaluate
 from utils.config import Config, configs
@@ -9,7 +9,7 @@ from utils.config import Config, configs
 configs.data.num_classes = 13
 
 # dataset configs
-configs.dataset = Config(S3DIS)
+configs.dataset = Config(TERRAIN)
 configs.dataset.root = 'data/terrain/pointcnn'
 configs.dataset.with_normalized_coords = True
 # configs.dataset.num_points = 2048
