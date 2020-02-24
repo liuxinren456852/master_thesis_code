@@ -1,0 +1,1 @@
+datasets/S3DIS behöver ändras för att tillåta fler areas

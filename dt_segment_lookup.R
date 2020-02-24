@@ -66,15 +66,19 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
   # data. For use in lapply.
   suppressPackageStartupMessages(require(parallel))
   function(seg_no){
+    #browser()
     write(paste("Segment", seg_no, "started at", Sys.time()), stdout())
     seg_limits <- map_grid[rownum == seg_no, ]
-
     # Create  temporary data sets for source and target
-    seg_source <- source_data[X>=seg_limits$xmin &
-                                X<=seg_limits$xmax &
-                                Y>=seg_limits$ymin &
-                                Y<=seg_limits$ymax,
-                              c(by, source_var), with = FALSE]
+    if("data.frame" %in% class(source_data)){
+      seg_source <- source_data[X>=seg_limits$xmin &
+                                  X<=seg_limits$xmax &
+                                  Y>=seg_limits$ymin &
+                                  Y<=seg_limits$ymax,
+                                c(by, source_var), with = FALSE]
+    } else {
+      seg_source <- source_data[[((seg_no-1)%%10)+1]]
+    }
     seg_target <- target_data[X>=seg_limits$xmin-target_tol &
                                 X<=seg_limits$xmax+target_tol &
                                 Y>=seg_limits$ymin-target_tol &
