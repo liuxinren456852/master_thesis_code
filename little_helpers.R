@@ -67,12 +67,12 @@ map_dist_plot <- function(data,  true_labels, addname = "", save_formats = c("pd
 }
 
 
-timing_writer <- function(init_time, end_time, seg_grp, nobs){
+timing_writer <- function(init_time, end_time, seg_grp, end_grp, nobs){
     total_time <- difftime(end_time, init_time, units = "mins")
-    record_time<- as.numeric(total_time) * 60 / (nobs/1000)
+    #record_time<- as.numeric(total_time) * 60 / (nobs/1000)
     time_record<- nobs / as.numeric(total_time)
     alarm()
-    write(paste("Segment set", seg_grp, "completed in", round(total_time, 2),
+    write(paste("Segment set", seg_grp,"/", eng_grp, "completed in", round(total_time, 2),
                 "minutes. Points per minute:", round(time_record, 1)),
           stdout())
 }

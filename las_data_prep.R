@@ -151,7 +151,7 @@ for(area in areas){
 
     stopCluster(cl)
 
-    timing_writer(init_time_1, Sys.time(), seg_grp, sum(sapply(las_omap_join, nrow)))
+    timing_writer(init_time_1, Sys.time(), seg_grp, end_seg_grp, sum(sapply(las_omap_join, nrow)))
     alarm()
     seg_grp    <- seg_grp + 1 
   }
