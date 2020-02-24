@@ -17,7 +17,7 @@ option_list <- list(
   make_option(c("-s", "--seg_size"), type = "integer", default = 100,
               help = "Size of chunks to be processed and represent sub area [default %default]",
               dest = "seg_size"),
-  make_option(c("-r", "--runmode"), type = "character", default = "7",
+  make_option(c("-r", "--runmode"), type = "character", default = "21",
               help = "Maximum number of segments to run. Non-integer to run all [default %default]",
               dest = "runmode"),
   make_option(c("-c", "--cores"), type = "integer", default = 6,
@@ -102,13 +102,13 @@ for(area in areas){
   omap_grid  <- omap_grid[!(rownum %in% done_seg_id),]
   seg_grp    <- min(omap_grid[, rowgrp])
   
-  # Read relevant LiDAR files
+  # Read relevant LiDAR files and normalize intensity
   las_tol    <- 0
   las        <- las_reader(las_cat, map_grid = omap_grid, select_string = "i", 
                            tol = las_tol, zlim = curr_las_zlim)
   las@data[, Intensity := Intensity / intens_max]
   
-  # Read relevant surfance model files
+  # Read relevant surfance model files and normalize colours
   sfm_tol    <- 1
   sfm        <- las_reader(sfm_cat, map_grid = omap_grid, select_string = "*", 
                            tol = sfm_tol, zlim = curr_las_zlim)
@@ -124,34 +124,48 @@ for(area in areas){
     # Process laslookup in sfm
     init_time_1 <- Sys.time()
     cl         <- parallel::makeForkCluster(min(floor(parallel::detectCores())-1, num_cores))
-
-    las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
-                                        by = c("X", "Y"),
-                                        source_data = las@data,
-                                        source_var = c("Z","Intensity"),
-                                        target_data = sfm@data, 
-                                        target_var = c("R", "G", "B"), 
-                                        target_tol = sfm_tol, fun = .dt_closest, cl = cl)
-
-    las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid,
-                                         by = c("X", "Y"),
-                                         source_data = las_sfm_join,
-                                         source_var = c("Z", "Intensity", "R", "G", "B"),
-                                         target_data = omap,
-                                         target_var = c("category"),
-                                         target_tol = 5, fun = .dt_closest, cl = cl)
-
+# 
+#     las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
+#                                         by = c("X", "Y"),
+#                                         source_data = las@data,
+#                                         source_var = c("Z","Intensity"),
+#                                         target_data = sfm@data, 
+#                                         target_var = c("R", "G", "B"), 
+#                                         target_tol = sfm_tol, fun = .dt_closest, cl = cl)
+# 
+#     las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid,
+#                                          by = c("X", "Y"),
+#                                          source_data = las_sfm_join,
+#                                          source_var = c("Z", "Intensity", "R", "G", "B"),
+#                                          target_data = omap,
+#                                          target_var = c("category"),
+#                                          target_tol = 5, fun = .dt_closest, cl = cl)
+# 
+   
+# 
+#     las_sfm_join <- parLapply(X = curr_grp, fun = las_sfm_lookup, cl = cl)
+#     las_omap_join <- parLapply(X = curr_grp, fun = las_omap_lookup, cl = cl)
+    suppressPackageStartupMessages(require(parallel))
+    las_fuzzy_join <- dt_fuzzy_join_factory(omap_grid, 
+                                            by = c("X", "Y"),
+                                            source_data = las@data,
+                                            source_var = c("Z","Intensity"),
+                                            target_data = list(sfm@data, omap),
+                                            target_var = list(c("R", "G", "B"), c("category")), 
+                                            target_tol = list(sfm_tol, 5), 
+                                            fun = .dt_closest)
+    
+    las_join <- parLapply(X = curr_grp, fun = las_fuzzy_join, cl = cl)
+    
     seg_writer <- seg_list_writer_factory(output_dir = curr_output,
-                                          data_list = las_omap_join,
+                                          data_list = las_join,
                                           seg_grp = seg_grp)
-
-    las_sfm_join <- lapply(X = curr_grp, FUN = las_sfm_lookup)
-    las_omap_join <- lapply(X = curr_grp, FUN = las_omap_lookup)
-    invisible(lapply(seq.int(1,length(las_omap_join)), seg_writer))
+    
+    invisible(lapply(seq.int(1,length(las_join)), seg_writer))
 
     stopCluster(cl)
 
-    timing_writer(init_time_1, Sys.time(), seg_grp, end_seg_grp, sum(sapply(las_omap_join, nrow)))
+    timing_writer(init_time_1, Sys.time(), seg_grp, end_seg_grp, sum(sapply(las_join, nrow)))
     alarm()
     seg_grp    <- seg_grp + 1 
   }
