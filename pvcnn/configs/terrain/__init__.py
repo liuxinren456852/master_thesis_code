@@ -10,7 +10,7 @@ configs.data.num_classes = 13
 
 # dataset configs
 configs.dataset = Config(TERRAIN)
-configs.dataset.root = 'data/terrain/pointcnn'
+configs.dataset.root = 'data/terrain/h5_output'
 configs.dataset.with_normalized_coords = True
 # configs.dataset.num_points = 2048
 # configs.dataset.holdout_area = 5

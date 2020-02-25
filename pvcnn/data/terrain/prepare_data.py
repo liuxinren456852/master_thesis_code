@@ -90,13 +90,13 @@ def prepare_label(data_dir, output_dir):
 def main():
     default_data_dir = 'area_output'
     default_output_dir = 'area_output'
-    default_h5output_dir = 'h5_output' #tillagt för att få ut h5filerna separat
+    default_h5output_dir = 'data/terrain/h5_output' #tillagt för att få ut h5filerna separat
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data', dest='data_dir', default=default_data_dir,
                         help=f'Path to S3DIS data (default is {default_data_dir})')
     parser.add_argument('-f', '--folder', dest='output_dir', default=default_output_dir,
                         help=f'Folder to write labels (default is {default_output_dir})')
-    parser.add_argument('-h', '--h5folder', dest='h5output_dir', default=default_h5output_dir,
+    parser.add_argument('-o', '--h5folder', dest='h5output_dir', default=default_h5output_dir,
                         help=f'Folder to write h5-files (default is {default_h5output_dir})')
     parser.add_argument('--max_num_points', '-m', help='Max point number of each sample', type=int, default=4096) #ändrat för färre segment
     parser.add_argument('--block_size', '-b', help='Block size', type=float, default=20) # lower resolution
@@ -109,6 +109,7 @@ def main():
     prepare_label(data_dir=args.data_dir, output_dir=args.output_dir)
 
     root = args.output_dir
+    h5output = args.h5output_dir
     max_num_points = args.max_num_points
 
     batch_size = 2048
@@ -118,17 +119,26 @@ def main():
     label_seg = np.zeros((batch_size, max_num_points), dtype=np.int32)
     indices_split_to_full = np.zeros((batch_size, max_num_points), dtype=np.int32)
 
+    if not os.path.isdir(h5output):
+        os.makedirs(h5output)
+
     ## Tar in .npy-filerna och spottar ut hd5-filerna.
     areas = os.listdir(args.data_dir)
     areas.remove("true_labels.csv")
     for area_idx in range(1, len(areas)+1): # Loopar genom areornas
         folder = os.path.join(root, 'Area_%d' % area_idx) # Sökväg till areans målmapp
-        h5folder = os.path.join(root, 'Area_%d' % area_idx) # Tillagt för att få ut h5filerna nån annanstans
+        h5folder = os.path.join(h5output, 'Area_%d' % area_idx) # Tillagt för att få ut h5filerna nån annanstans
+        if not os.path.isdir(h5folder):
+            os.makedirs(h5folder)
+
         datasets = sorted([dataset for dataset in os.listdir(folder)])
         # Tillagt för att ta hand om R's kontrollfil
         if ".area" in datasets :
             datasets.remove(".area")
         for dataset_idx, dataset in enumerate(datasets): # för varje rum...
+            h5dataset_folder = os.path.join(h5folder, dataset)
+            if not os.path.isdir(h5dataset_folder):
+                os.makedirs(h5dataset_folder)
             dataset_marker = os.path.join(h5folder, dataset, '.dataset') # kollar om .dataset-filen finns och skippar rummet isåfall
             if os.path.exists(dataset_marker):
                 print(f'{datetime.now()}-{folder}/{dataset} already processed, skipping')

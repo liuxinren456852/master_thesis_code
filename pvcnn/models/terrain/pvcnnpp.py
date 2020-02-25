@@ -7,6 +7,8 @@ __all__ = ['PVCNN2']
 
 class PVCNN2(nn.Module):
     sa_blocks = [
+        #((conv_config=out_channels, num_blocks, voxel_resolution),
+        # (sa_configs=, ()))
         ((32, 2, 32), (1024, 0.1, 32, (32, 64))),
         ((64, 3, 16), (256, 0.2, 32, (64, 128))),
         ((128, 3, 8), (64, 0.4, 32, (128, 256))),
