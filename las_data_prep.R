@@ -36,7 +36,7 @@ source("true_colour_codes.R")
 source("little_helpers.R")
 source("seg_list_writer.R")
 suppressPackageStartupMessages(require(lidR))
-
+suppressPackageStartupMessages(require(parallel))
 init_time_0<- Sys.time()
 map_source <- opts$map_source
 output_dir <- opts$output_dir
@@ -145,7 +145,7 @@ for(area in areas){
 # 
 #     las_sfm_join <- parLapply(X = curr_grp, fun = las_sfm_lookup, cl = cl)
 #     las_omap_join <- parLapply(X = curr_grp, fun = las_omap_lookup, cl = cl)
-    suppressPackageStartupMessages(require(parallel))
+    
     las_fuzzy_join <- dt_fuzzy_join_factory(omap_grid, 
                                             by = c("X", "Y"),
                                             source_data = las@data,
@@ -153,17 +153,18 @@ for(area in areas){
                                             target_data = list(sfm@data, omap),
                                             target_var = list(c("R", "G", "B"), c("category")), 
                                             target_tol = list(sfm_tol, 5), 
-                                            fun = .dt_closest)
+                                            fun = .dt_closest,
+                                            cl = cl)
     
-    las_join <- parLapply(X = curr_grp, fun = las_fuzzy_join, cl = cl)
+    las_join <- lapply(X = curr_grp, FUN = las_fuzzy_join)
+
+    stopCluster(cl)
     
     seg_writer <- seg_list_writer_factory(output_dir = curr_output,
                                           data_list = las_join,
                                           seg_grp = seg_grp)
     
     invisible(lapply(seq.int(1,length(las_join)), seg_writer))
-
-    stopCluster(cl)
 
     timing_writer(init_time_1, Sys.time(), seg_grp, end_seg_grp, sum(sapply(las_join, nrow)))
     alarm()

@@ -65,7 +65,7 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
                               target_data, target_var, target_tol, fun, cl){
   # Creates a function subsets data for a segment and then runs closest lookup in those
   # data. For use in lapply.
-  suppressPackageStartupMessages(require(parallel))
+  #suppressPackageStartupMessages(require(parallel))
   function(seg_no){
     browser()
     write(paste("Segment", seg_no, "started at", Sys.time()), stdout())
@@ -98,28 +98,27 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
 }
 
 dt_fuzzy_join_factory <- function(limits, by, source_data, source_var, 
-                          target_data, target_var, target_tol, fun){
+                          target_data, target_var, target_tol, fun, cl){
   function(seg_no){
     seg_limits <- unlist(limits[rownum == seg_no, ])
-    print(seg_no)
     looked_up <- as.matrix(source_data[X>=seg_limits["xmin"] &
                                          X<=seg_limits["xmax"] &
                                          Y>=seg_limits["ymin"] &
                                          Y<=seg_limits["ymax"],
                                        c(by, source_var), with = FALSE])
-    print("init data subset")
     for(t_id in seq_along(target_data)){
+      init_time <- Sys.time()
       seg_target <- target_data[[t_id]][X>=seg_limits["xmin"]-target_tol[[t_id]] &
                                           X<=seg_limits["xmax"]+target_tol[[t_id]] &
                                           Y>=seg_limits["ymin"]-target_tol[[t_id]] &
                                           Y<=seg_limits["ymax"]+target_tol[[t_id]],
                                         c(by, target_var[[t_id]]), with = FALSE]
-      print(paste(t_id, "target subset"))
+      #write(paste(t_id, "target subset"), stdout())
       seg_lookup <- seg_lookup_factory(looked_up, seg_target, target_tol[[t_id]], .dt_closest)
       
       # Make cluster to speed up searching for values
-      looked_up <-t(sapply(X = seq.int(1, nrow(looked_up)), FUN = seg_lookup))
-      print(paste(t_id, "target joined"))
+      looked_up <-t(parSapply(X = seq.int(1, nrow(looked_up)), FUN = seg_lookup, cl = cl))
+      #write(paste("target", t_id, "joined in", round(difftime(Sys.time(), init_time, units = "secs"),0),"s."), stdout())
     }
     #looked_up_dt <- as.data.table(looked_up)
     #setnames(looked_up_dt, c(by, source_var, unlist(target_var)))
