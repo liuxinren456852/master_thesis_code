@@ -41,3 +41,8 @@ vignettes/*.pdf
 /area_output/
 *ipynb*
 /pvcnn/runs/*
+.pyc
+__pycache__
+*.idea
+pvcnn/data/terrain/h5_output/
+pvcnn/configs/terrain/__pycache__/
