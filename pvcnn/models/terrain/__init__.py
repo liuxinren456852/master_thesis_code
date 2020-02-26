@@ -1,3 +1,3 @@
-from models.s3dis.pointnet import PointNet
-from models.s3dis.pvcnn import PVCNN
-from models.s3dis.pvcnnpp import PVCNN2
+from models.terrain.pointnet import PointNet
+from models.terrain.pvcnn import PVCNN
+from models.terrain.pvcnnpp import PVCNN2

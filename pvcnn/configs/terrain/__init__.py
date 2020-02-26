@@ -2,11 +2,11 @@ import torch.nn as nn
 import torch.optim as optim
 
 from datasets.terrain import TERRAIN
-from meters.s3dis import MeterS3DIS
-from evaluate.s3dis.eval import evaluate
+from meters.terrain import MeterTERRAIN
+from evaluate.terrain.eval import evaluate
 from utils.config import Config, configs
 
-configs.data.num_classes = 13
+configs.data.num_classes = 10
 
 # dataset configs
 configs.dataset = Config(TERRAIN)
@@ -29,8 +29,8 @@ configs.train.batch_size = 32
 
 # train: meters
 configs.train.meters = Config()
-configs.train.meters['acc/iou_{}'] = Config(MeterS3DIS, metric='iou', num_classes=configs.data.num_classes)
-configs.train.meters['acc/acc_{}'] = Config(MeterS3DIS, metric='overall', num_classes=configs.data.num_classes)
+configs.train.meters['acc/iou_{}'] = Config(MeterTERRAIN, metric='iou', num_classes=configs.data.num_classes)
+configs.train.meters['acc/acc_{}'] = Config(MeterTERRAIN, metric='overall', num_classes=configs.data.num_classes)
 
 # train: metric for save best checkpoint
 configs.train.metric = 'acc/iou_test'
