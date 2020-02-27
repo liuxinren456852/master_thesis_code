@@ -6,7 +6,7 @@ from meters.terrain import MeterTERRAIN
 from evaluate.terrain.eval import evaluate
 from utils.config import Config, configs
 
-configs.data.num_classes = 10
+configs.data.num_classes = 9
 
 # dataset configs
 configs.dataset = Config(TERRAIN)
@@ -24,8 +24,8 @@ configs.evaluate.dataset = Config(split='test')
 
 # train configs
 configs.train = Config()
-configs.train.num_epochs = 50
-configs.train.batch_size = 32
+configs.train.num_epochs = 3
+configs.train.batch_size = 16
 
 # train: meters
 configs.train.meters = Config()
