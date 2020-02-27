@@ -90,7 +90,7 @@ def prepare_label(data_dir, output_dir):
 def main():
     default_data_dir = 'area_output'
     default_output_dir = 'area_output'
-    default_h5output_dir = 'data/terrain/h5_output' #tillagt för att få ut h5filerna separat
+    default_h5output_dir = 'pvcnn/data/terrain/h5_output' #tillagt för att få ut h5filerna separat
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data', dest='data_dir', default=default_data_dir,
                         help=f'Path to S3DIS data (default is {default_data_dir})')
