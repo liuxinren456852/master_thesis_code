@@ -4,7 +4,7 @@ __all__ = ['MeterTERRAIN']
 
 
 class MeterTERRAIN:
-    def __init__(self, metric='iou', num_classes=10):
+    def __init__(self, metric='iou', num_classes=9):
         super().__init__()
         assert metric in ['overall', 'class', 'iou']
         self.metric = metric
