@@ -44,5 +44,6 @@ vignettes/*.pdf
 .pyc
 __pycache__
 *.idea
-pvcnn/data/terrain/h5_output/
+pvcnn/data/terrain/h5_*/
 pvcnn/configs/terrain/__pycache__/
+
