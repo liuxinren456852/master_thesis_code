@@ -13,6 +13,8 @@ option_list <- list(
   
 )
 
+source("true_colour_codes.R")
+
 opt_parser <- OptionParser(option_list=option_list)
 opts       <- parse_args(opt_parser)
 
@@ -21,12 +23,14 @@ if(!dir.exists(opts$las_output)) { dir.create(opts$las_output) }
 rgb_max    <- 2^16
 intens_max <- 255
 
-areas      <- dir(opts$npy_source, full.names = TRUE)
-nareas     <- length(areas)
-areas      <- areas[!(grepl(x = areas, pattern =  "\\."))]
-area_id    <- 0
-#area_stats <- matrix(nrow = nareas, ncol = 4)
+true_labels<- create_true_labels()
 
+areas      <- dir(opts$npy_source, full.names = TRUE)
+areas      <- areas[!(grepl(x = areas, pattern =  "\\."))]
+nareas     <- length(areas)
+
+area_id    <- 0
+area_stats <- vector("list", nareas)
 for(area in areas){
   area_name  <- sub("area_output/", "", area)
   area_id    <- area_id + 1
@@ -50,6 +54,10 @@ for(area in areas){
   setkey(seg_dt, X, Y)
   las <- LAS(seg_dt)
   writeLAS(las, paste0(opts$las_output, area_name, "_joined.las"))
-  area_stats[area_id, ] <- c(range(seg_dt$X), range(seg_dt$Y),
-                             c(table(true_labels[seg_dt$Classification, "category"])))
+  area_stats[[area_id]] <- data.table(t(c(xmax = max(seg_dt$X), xmin = min(seg_dt$X),
+                               ymax = max(seg_dt$Y), ymin = min(seg_dt$Y),
+                               unlist(table(true_labels[1+seg_dt$Classification, "category"])))))
+  area_stats[[area_id]][, area_name := area_name]
 }
+area_stats_dt <- rbindlist(area_stats, fill = TRUE, use.names = TRUE)
+write.csv2(x = area_stats_dt, file = paste0(opts$las_output, "area_stats.csv"))
