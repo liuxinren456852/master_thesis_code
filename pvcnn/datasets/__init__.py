@@ -1,1 +1,1 @@
-from datasets.s3dis import S3DIS
+from datasets.terrain import TERRAIN
