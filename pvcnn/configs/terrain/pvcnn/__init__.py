@@ -1,6 +1,6 @@
 import torch.optim as optim
 
-from models.s3dis import PVCNN
+from models.terrain import PVCNN
 from utils.config import Config, configs
 
 # model
