@@ -180,7 +180,9 @@ def main():
     if configs.device == 'cuda':
         model = torch.nn.DataParallel(model)
     model = model.to(configs.device)
-    criterion = configs.train.criterion().to(configs.device)
+    criterion = configs.train.criterion()
+    criterion.weight = torch.FloatTensor([0.19235, 0.09149, 0.02874, 0.00862, 0.46709, 0.12408, 0.07352, 0.01175, 0.00263])
+    criterion = criterion.to(configs.device)
     optimizer = configs.train.optimizer(model.parameters())
 
     last_epoch, best_metrics = -1, {m: None for m in configs.train.metrics}

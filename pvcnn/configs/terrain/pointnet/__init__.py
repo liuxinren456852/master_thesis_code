@@ -1,13 +1,13 @@
 import torch.optim as optim
 
-from models.s3dis import PointNet
+from models.terrain import PointNet
 from utils.config import Config, configs
 
 # model
 configs.model = Config(PointNet)
 configs.model.num_classes = configs.data.num_classes
-configs.model.extra_feature_channels = 6
-configs.dataset.num_points = 4096
+configs.model.extra_feature_channels = 7
+configs.dataset.num_points = 8196
 
 # configs.train.scheduler = Config(optim.lr_scheduler.StepLR)
 # configs.train.scheduler.step_size = 5  # learning rate clip = 1e-5

@@ -60,4 +60,7 @@ for(area in areas){
   area_stats[[area_id]][, area_name := area_name]
 }
 area_stats_dt <- rbindlist(area_stats, fill = TRUE, use.names = TRUE)
-write.csv2(x = area_stats_dt, file = paste0(opts$las_output, "area_stats.csv"))
+category_weights <- 1 / colSums(area_stats_dt[,-c(1:4, ncol(area_stats_dt))])
+category_weights <- category_weights/sum(category_weights)
+write.csv(x = category_weights, file = paste0(opts$las_output, "category_weights.csv"))
+write.csv(x = area_stats_dt, file = paste0(opts$las_output, "area_stats.csv"))

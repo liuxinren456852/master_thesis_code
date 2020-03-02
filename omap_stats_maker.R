@@ -71,3 +71,5 @@ area_stats[, area := c(areas, "total")]
 write(paste0(length(areas), " areas finished in ", 
              round(difftime(Sys.time(), init_time_0, units = "mins"),1), " min."),
       stdout())
+
+write.csv(area_stats, file="omap_stats.csv")

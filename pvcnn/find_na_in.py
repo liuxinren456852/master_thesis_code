@@ -17,7 +17,10 @@ for area in areas:
             filepath = os.path.join(seg_folder, file)
             h5file = h5py.File(filepath, 'r')
             h5nas = [np.argwhere(np.isnan(h5file[key][()])).shape[0] for key in h5file.keys()]
-            if np.sum(h5nas) > 0:
-                print(filepath)
+            if any(h5nas) :
+                print(filepath + " contains NaN")
+            h5inf = [np.argwhere(np.isinf(h5file[key][()])).shape[0] for key in h5file.keys()]
+            if any(h5inf):
+                print(filepath + " contains Inf")
 
 
