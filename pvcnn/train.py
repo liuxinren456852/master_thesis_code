@@ -71,6 +71,7 @@ def prepare():
         assert configs.evaluate.best_checkpoint_path.endswith('.pth.tar')
         configs.evaluate.predictions_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.predictions')
         configs.evaluate.stats_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.eval.npy')
+        configs.evaluate.conf_mat_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.conf_mat.npy')
 
     return configs
 
