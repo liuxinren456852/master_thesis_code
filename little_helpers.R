@@ -92,3 +92,18 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
     setkeyv(map, oldkey)
     png::writePNG(map_array, paste0(dirname, "_", colour, "_map.png"))
 }
+
+confusion_matrix_xtable <- function(cm_path){
+    # Helper to print the conf-matrix outout of eval in a slightly prettier way
+    #"/home/guslun/master_thesis_code/pvcnn/runs/[configs+terrain.pointnet.area9]/best.conf_mat.npy"
+    suppressPackageStartupMessages(library(RcppCNPy))
+    suppressPackageStartupMessages(library(xtable))
+    source("true_colour_codes.R")
+    
+    true_labels <- create_true_labels()
+    
+    conf_mat <- npyLoad(cm_path)
+    dimnames(conf_mat) <- list(true_labels$category, true_labels$category)
+    xtable(conf_mat, digits = 0)
+    
+}
