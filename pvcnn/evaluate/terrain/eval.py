@@ -185,7 +185,7 @@ def evaluate(configs=None):
         update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_scene)
 
     np.save(configs.evaluate.stats_path, stats)
-    np.save(configs.evaluate.stats_path, conf_mat)
+    np.save(configs.evaluate.conf_mat_path, conf_mat)
     print_stats(stats)
 
 
