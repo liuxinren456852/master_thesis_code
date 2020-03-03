@@ -2,9 +2,9 @@ import os
 import numpy as np
 from shutil import copyfile
 
-area_id = "5"
-h5_path = "/home/guslun/master_thesis_code/pvcnn/data/terrain/h5_output"
-label_path = "/home/guslun/master_thesis_code/area_output"
+area_id = "9"
+h5_path = "../pvcnn/data/terrain/h5_output"
+label_path = "../area_output"
 
 h5_folder = os.path.join(h5_path, "Area_" + area_id)
 label_folder = os.path.join(label_path, "Area_" + area_id)

@@ -129,6 +129,7 @@ def evaluate(configs=None):
 
     total_num_scenes = len(dataset.scene_list)
     stats = np.zeros((3, configs.data.num_classes, total_num_scenes))
+    conf_mat = np.zeros((configs.data.num_classes, configs.data.num_classes))
 
     for scene_index, (scene, scene_files) in enumerate(tqdm(dataset.scene_list.items(), desc='eval', ncols=0)):
         ground_truth = np.load(os.path.join(scene, 'label.npy')).reshape(-1)
@@ -181,8 +182,10 @@ def evaluate(configs=None):
 
         # update stats
         update_stats(stats, ground_truth, predictions, scene_index, total_num_points_in_scene)
+        update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_scene)
 
     np.save(configs.evaluate.stats_path, stats)
+    np.save(configs.evaluate.stats_path, conf_mat)
     print_stats(stats)
 
 
@@ -214,6 +217,12 @@ def update_stats(stats, ground_truth, predictions, scene_index, total_num_points
         if gt == pd:
             stats[2, gt, scene_index] += 1
 
+@numba.jit()
+def update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_scene):
+    for p in range(total_num_points_in_scene):
+        gt = int(ground_truth[p])
+        pd = int(predictions[p])
+        conf_mat[pd, gt] += 1
 
 if __name__ == '__main__':
     evaluate()

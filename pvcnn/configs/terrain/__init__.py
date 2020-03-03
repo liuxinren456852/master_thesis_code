@@ -20,12 +20,12 @@ configs.dataset.with_normalized_coords = True
 configs.evaluate = Config()
 configs.evaluate.fn = evaluate
 configs.evaluate.num_votes = 10
-configs.evaluate.batch_size = 10
+configs.evaluate.batch_size = 4
 configs.evaluate.dataset = Config(split='test')
 
 # train configs
 configs.train = Config()
-configs.train.num_epochs = 5
+configs.train.num_epochs = 8
 configs.train.batch_size = 32
 
 # train: meters

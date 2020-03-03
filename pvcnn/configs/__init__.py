@@ -5,4 +5,4 @@ configs.deterministic = False
 
 # data configs
 configs.data = Config()
-configs.data.num_workers = 10
+configs.data.num_workers = 16
