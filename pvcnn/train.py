@@ -14,6 +14,7 @@ def prepare():
     parser.add_argument('configs', nargs='+')
     parser.add_argument('--devices', default=None)
     parser.add_argument('--evaluate', default=False, action='store_true')
+    parser.add_argument('--epochs', default=None)
     args, opts = parser.parse_known_args()
     if args.devices is not None and args.devices != 'cpu':
         gpus = set_cuda_visible_devices(args.devices)
@@ -72,6 +73,9 @@ def prepare():
         configs.evaluate.predictions_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.predictions')
         configs.evaluate.stats_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.eval.npy')
         configs.evaluate.conf_mat_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.conf_mat.npy')
+
+    if args.epochs is not None:
+        configs.train.num_epochs = int(args.epochs)
 
     return configs
 
@@ -211,7 +215,6 @@ def main():
     ############
     # Training #
     ############
-
     if last_epoch >= configs.train.num_epochs:
         meters = dict()
         for split, loader in loaders.items():

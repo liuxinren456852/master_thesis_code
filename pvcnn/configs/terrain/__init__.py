@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.optim as optim
-from torch import FloatTensor
 
 from datasets.terrain import TERRAIN
 from meters.terrain import MeterTERRAIN
@@ -20,12 +19,12 @@ configs.dataset.with_normalized_coords = True
 configs.evaluate = Config()
 configs.evaluate.fn = evaluate
 configs.evaluate.num_votes = 10
-configs.evaluate.batch_size = 4
+configs.evaluate.batch_size = 6
 configs.evaluate.dataset = Config(split='test')
 
 # train configs
 configs.train = Config()
-configs.train.num_epochs = 8
+configs.train.num_epochs = 4
 configs.train.batch_size = 32
 
 # train: meters

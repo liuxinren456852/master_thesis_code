@@ -7,9 +7,10 @@ __all__ = ['PVCNN']
 
 
 class PVCNN(nn.Module):
+    # Skapar tre PVconv med (in_ch, out_ch, resolution)
     blocks = ((64, 1, 32), (64, 2, 16), (128, 1, 16), (1024, 1, None))
 
-    def __init__(self, num_classes, extra_feature_channels=7, width_multiplier=1, voxel_resolution_multiplier=1):
+    def __init__(self, num_classes, extra_feature_channels=7, width_multiplier=1, voxel_resolution_multiplier=2):
         super().__init__()
         self.in_channels = extra_feature_channels + 3
 

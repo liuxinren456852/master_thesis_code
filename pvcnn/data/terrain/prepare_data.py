@@ -102,6 +102,8 @@ def main():
     parser.add_argument('--block_size', '-b', help='Block size', type=float, default=20) # lower resolution
     parser.add_argument('--grid_size', '-g', help='Grid size', type=float, default=0.03)
     parser.add_argument('--save_ply', '-s', help='Convert .pts to .ply', action='store_true')
+    parser.add_argument('--last_area', help='Highest area number to include', default=None)
+    parser.add_argument('--max_segments', help='Highest number of segments to include', default=None)
 
     args = parser.parse_args()
     print(args)
@@ -125,7 +127,12 @@ def main():
     ## Tar in .npy-filerna och spottar ut hd5-filerna.
     areas = os.listdir(args.data_dir)
     areas.remove("true_labels.csv")
-    for area_idx in range(1, len(areas)+1): # Loopar genom areornas
+    if args.last_area is not None and int(args.last_area) <= len(areas)+1:
+        last_area = int(args.last_area)+1
+    else:
+        last_area = len(areas)+1
+
+    for area_idx in range(1, last_area): # Loopar genom areornas
         folder = os.path.join(root, 'Area_%d' % area_idx) # Sökväg till areans målmapp
         h5folder = os.path.join(h5output, 'Area_%d' % area_idx) # Tillagt för att få ut h5filerna nån annanstans
         if not os.path.isdir(h5folder):
@@ -135,6 +142,12 @@ def main():
         # Tillagt för att ta hand om R's kontrollfil
         if ".area" in datasets :
             datasets.remove(".area")
+
+        #Tillagt för att skapa mindre test-set
+        if args.max_segments is not None:
+            max_segment = min(int(args.max_segments)+1, len(datasets))
+            datasets = datasets[:max_segment]
+
         for dataset_idx, dataset in enumerate(datasets): # för varje rum...
             h5dataset_folder = os.path.join(h5folder, dataset)
             if not os.path.isdir(h5dataset_folder):
@@ -149,6 +162,7 @@ def main():
             xyzrgb = np.load(filename_data)
             if xyzrgb.shape[0]==0:
                 print(f'{datetime.now()}-{folder}/{dataset} is empty, skipping')
+                os.rmdir(h5dataset_folder)
                 continue
             xyzrgb[:, 0:3] -= np.amin(xyzrgb, axis=0)[0:3] # Drar bort minsta xyz-värde
 
@@ -163,7 +177,7 @@ def main():
             xyz_center[0][-1] = xyz_min[0][-1]
             # Remark: Don't do global alignment.
             # xyz = xyz - xyz_center
-            rgb = rgb / 255.0
+            # rgb = rgb / 255.0 # Behövs inte eftersom det hanteras av R
             max_room_x = np.max(xyz[:, 0])
             max_room_y = np.max(xyz[:, 1])
             max_room_z = np.max(xyz[:, 2])
