@@ -15,7 +15,7 @@ class PVCNN(nn.Module):
         self.in_channels = extra_feature_channels + 3
 
         layers, channels_point, concat_channels_point = create_pointnet_components(
-            blocks=self.blocks, in_channels=self.in_channels, with_se=False,
+            blocks=self.blocks, in_channels=self.in_channels, with_se=False, eps = 1e-17,
             width_multiplier=width_multiplier, voxel_resolution_multiplier=voxel_resolution_multiplier
         )
         self.point_features = nn.ModuleList(layers)

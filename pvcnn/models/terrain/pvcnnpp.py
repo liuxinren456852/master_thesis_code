@@ -27,7 +27,7 @@ class PVCNN2(nn.Module):
 
         sa_layers, sa_in_channels, channels_sa_features, _ = create_pointnet2_sa_components(
             sa_blocks=self.sa_blocks, extra_feature_channels=extra_feature_channels, with_se=True,
-            width_multiplier=width_multiplier, voxel_resolution_multiplier=voxel_resolution_multiplier
+            width_multiplier=width_multiplier, voxel_resolution_multiplier=voxel_resolution_multiplier, eps=1e-17
         )
         self.sa_layers = nn.ModuleList(sa_layers)
 
@@ -35,7 +35,7 @@ class PVCNN2(nn.Module):
         sa_in_channels[0] = extra_feature_channels
         fp_layers, channels_fp_features = create_pointnet2_fp_modules(
             fp_blocks=self.fp_blocks, in_channels=channels_sa_features, sa_in_channels=sa_in_channels, with_se=True,
-            width_multiplier=width_multiplier, voxel_resolution_multiplier=voxel_resolution_multiplier
+            width_multiplier=width_multiplier, voxel_resolution_multiplier=voxel_resolution_multiplier, eps = 1e-17
         )
         self.fp_layers = nn.ModuleList(fp_layers)
 
