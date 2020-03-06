@@ -2,7 +2,7 @@ import os
 import numpy as np
 from shutil import copyfile
 
-area_id = "9"
+area_id = "5"
 h5_path = "../pvcnn/data/terrain/h5_output"
 label_path = "../area_output"
 
