@@ -93,7 +93,10 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
     png::writePNG(map_array, paste0(dirname, "_", colour, "_map.png"))
 }
 
-confusion_matrix_xtable <- function(cm_path){
+confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
+    if(is.null(cm_path)){
+        cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".area",test_area,"]/best.conf_mat.npy")
+    }
     # Helper to print the conf-matrix outout of eval in a slightly prettier way
     #"/home/guslun/master_thesis_code/pvcnn/runs/[configs+terrain.pointnet.area9]/best.conf_mat.npy"
     suppressPackageStartupMessages(library(RcppCNPy))
@@ -104,6 +107,10 @@ confusion_matrix_xtable <- function(cm_path){
     
     conf_mat <- npyLoad(cm_path)
     dimnames(conf_mat) <- list(true_labels$category, true_labels$category)
-    xtable(conf_mat, digits = 0)
-    
+    accuracy <- sum(diag(conf_mat))/sum(conf_mat)
+    iou <- mean(diag(conf_mat) / (rowSums(conf_mat) + colSums(conf_mat) - diag(conf_mat)))
+    shortcaption <- paste("Confusion matrix for", model, "tested on area", test_area)
+    longcaption <- paste(shortcaption,".\nAccuracy:", round(accuracy,2), ", IoU:", round(iou,2))
+    cm_label <- paste0("tab:res_",model, "_", test_area)
+    xtable(conf_mat, digits = 0, caption = c(longcaption, shortcaption), label = cm_label)
 }
