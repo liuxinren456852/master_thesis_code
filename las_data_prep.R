@@ -1,10 +1,7 @@
 suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
-  # make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
-  #             help="Print extra output [default]"),
-  # make_option(c("-q", "--quietly"), action="store_false", 
-  #             dest="verbose", help="Print little output"),
+
   make_option(c("-m", "--map_source"), type = "character", default="~/kartor/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "map_source"),
