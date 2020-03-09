@@ -70,4 +70,6 @@ for (area in areas){
 write(paste0("Test set of ", sum(split_stats$tests), " segments and validation set of ", 
              sum(split_stats$valid)," segments created."), stdout())
 
-write.csv(split_stats, "test_split_stats.csv",row.names = FALSE)
+write.csv(split_stats, paste0("test_split_stats_t",round(opts$test_prob*100),"v",
+                              round(opts$valid_prob*100), "s", opts$seed,".csv"),
+          row.names = FALSE)
