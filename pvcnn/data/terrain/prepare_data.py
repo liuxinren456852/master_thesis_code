@@ -93,7 +93,7 @@ def main():
     default_h5output_dir = 'pvcnn/data/terrain/h5_output' #tillagt för att få ut h5filerna separat
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data', dest='data_dir', default=default_data_dir,
-                        help=f'Path to S3DIS data (default is {default_data_dir})')
+                        help=f'Path to Terrain data (default is {default_data_dir})')
     parser.add_argument('-f', '--folder', dest='output_dir', default=default_output_dir,
                         help=f'Folder to write labels (default is {default_output_dir})')
     parser.add_argument('-o', '--h5folder', dest='h5output_dir', default=default_h5output_dir,
