@@ -9,8 +9,13 @@ option_list <- list(
               dest = "npy_source"),
   make_option(c("-l", "--las_output"), type = "character", default="las_output/", 
               help="Directory where to export the las-files [default %default]",
-              dest = "las_output")
-  
+              dest = "las_output"),
+  make_option(c("-t", "--test_area"), type = "character", default="Area_15", 
+              help="Area name for test area [default %default]",
+              dest = "test_area")
+  make_option(c("-v", "--valid_area"), type = "character", default="Area_16", 
+              help="Area name for test area [default %default]",
+              dest = "valid_area")
 )
 
 source("true_colour_codes.R")
@@ -60,7 +65,7 @@ for(area in areas){
   area_stats[[area_id]][, area_name := area_name]
 }
 area_stats_dt <- rbindlist(area_stats, fill = TRUE, use.names = TRUE)
-category_weights <- 1 / colSums(area_stats_dt[,-c(1:4, ncol(area_stats_dt))])
+category_weights <- 1 / colSums(area_stats_dt[!area_name %in% c(opts$test_area, opts$valid_area),-c(1:4, ncol(area_stats_dt))])
 category_weights <- category_weights/sum(category_weights)
 write.csv(x = category_weights, file = paste0(opts$las_output, "category_weights.csv"))
 write.csv(x = area_stats_dt, file = paste0(opts$las_output, "area_stats.csv"))
