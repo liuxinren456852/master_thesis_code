@@ -4,15 +4,18 @@ suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
   make_option(c("-s", "--source"), type = "character", 
-              default="~/master_thesis_code/pvcnn/data/terrain/h5_output/", 
+              default="~/master_thesis_code/area_output/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "source"),
   make_option(c("-t", "--test"), type = "double", default = 0.2,
-              help = "Number of cores to use [default %default]",
+              help = "Proportion of segments moved to test set  [default %default]",
               dest = "test_prob"),
   make_option(c("-v", "--valid"), type = "double", default = 0.2,
-              help = "Number of cores to use [default %default]",
-              dest = "valid_prob")
+              help = "Proportion of segments moved to validation set [default %default]",
+              dest = "valid_prob"),
+  make_option(c("-e", "--seed"), type = "integer", default = 831117,
+              help = "Random seed used [default %default]",
+              dest = "seed")
 )
 
 opt_parser <- OptionParser(option_list=option_list);
@@ -28,6 +31,7 @@ dir.create(valid_dir)
 
 split_stats<- data.frame(Area = areas, total = 0, tests = 0, valid = 0)
 area_id    <- 0
+set.seed(opts$seed)
 
 for (area in areas){
   area_id    <- area_id + 1
