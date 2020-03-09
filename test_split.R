@@ -1,7 +1,10 @@
+# Helper script to move a subset of segments to validation and test-folders
+
 suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
-  make_option(c("-s", "--source"), type = "character", default="~/master_thesis_code/pvcnn/data/terrain/h5_output/", 
+  make_option(c("-s", "--source"), type = "character", 
+              default="~/master_thesis_code/pvcnn/data/terrain/h5_output/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "source"),
   make_option(c("-t", "--test"), type = "double", default = 0.2,
@@ -17,28 +20,50 @@ opts       <- parse_args(opt_parser);
 
 areas      <- dir(opts$source, pattern = "^Area")
 nareas     <- length(areas)
-test_dir  <- paste0(opts$source, "Area_", nareas+1, "/")
-valid_dir <- paste0(opts$source, "Area_", nareas+2, "/")
+test_dir   <- paste0(opts$source, "Area_", nareas+1, "/")
+valid_dir  <- paste0(opts$source, "Area_", nareas+2, "/")
 
 dir.create(test_dir)
 dir.create(valid_dir)
 
+split_stats<- data.frame(Area = areas, total = 0, tests = 0, valid = 0)
+area_id    <- 0
+
 for (area in areas){
+  area_id    <- area_id + 1
   area_dir   <- paste0(opts$source, area, "/")
   datasets   <- dir(area_dir, pattern = "^seg")
   ndatasets  <- length(datasets)
+  split_stats[area_id, "total"] <- ndatasets
   splits     <- sample(c("train", "test", "valid"), size = ndatasets, replace = TRUE,
                        prob = c(1-(opts$test_prob + opts$valid_prob), 
                                 opts$test_prob, 
                                 opts$valid_prob))
   for(id in seq_along(datasets)){
     if(splits[id] == "test"){
-      source_name  <- paste0(area_dir, datasets[id])
-      target_name  <- paste0(area_dir, area,"_", datasets[id])
-      file.rename(source_name, target_name)
-      file.copy(target_name, paste0(test_dir))
+      source_dir  <- paste0(area_dir, datasets[id], "/")
+      target_dir  <- paste0(test_dir, area,"_", datasets[id], "/")
+      dir.create(target_dir)
+      files <- dir(source_dir, no.. = TRUE, all.files = TRUE)
+      for (f in files){
+        file.rename(paste0(source_dir, f), paste0(target_dir, f))
+      }
+      file.remove(source_dir)
+      split_stats[area_id, "tests"] <- split_stats[area_id, "tests"] + 1
     } else if(splits[id] == "valid") {
-      
+      source_dir  <- paste0(area_dir, datasets[id], "/")
+      target_dir  <- paste0(valid_dir, area,"_", datasets[id], "/")
+      dir.create(target_dir)
+      files <- dir(source_dir, no.. = TRUE, all.files = TRUE)
+      for (f in files){
+        file.rename(paste0(source_dir, f), paste0(target_dir, f))
+      }
+      file.remove(source_dir)
+      split_stats[area_id, "valid"] <- split_stats[area_id, "valid"] + 1
     }
   }
 }
+write(paste0("Test set of ", sum(split_stats$tests), " segments and validation set of ", 
+             sum(split_stats$valid)," segments created."), stdout())
+
+write.csv(split_stats, "test_split_stats.csv",row.names = FALSE)
