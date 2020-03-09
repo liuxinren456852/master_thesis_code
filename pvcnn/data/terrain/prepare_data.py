@@ -270,7 +270,7 @@ def main():
                     block_split_num = int(math.ceil(block_point_num * 1.0 / max_num_points))
                     point_num_avg = int(math.ceil(block_point_num * 1.0 / block_split_num))
                     point_nums = [point_num_avg] * block_split_num
-                    point_nums[-1] = block_point_num - (point_num_avg * (block_split_num - 1))
+                    point_nums[-1] = block_point_num - (point_num_avg * (block_split_num - 1)) #Sista täcker hela range:n
                     starts = [0] + list(np.cumsum(point_nums))
 
                     # Modified following convensions of PointNet.
