@@ -4,7 +4,7 @@ suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(RcppCNPy))
 
 option_list <- list( 
-  make_option(c("-n", "--npy_source"), type = "character", default="area_output", 
+  make_option(c("-n", "--npy_source"), type = "character", default="area_output/", 
               help="Directory where source numpy files are located as subfolders [default %default]",
               dest = "npy_source"),
   make_option(c("-l", "--las_output"), type = "character", default="las_output/", 
@@ -12,7 +12,7 @@ option_list <- list(
               dest = "las_output"),
   make_option(c("-t", "--test_area"), type = "character", default="Area_15", 
               help="Area name for test area [default %default]",
-              dest = "test_area")
+              dest = "test_area"),
   make_option(c("-v", "--valid_area"), type = "character", default="Area_16", 
               help="Area name for test area [default %default]",
               dest = "valid_area")
@@ -65,7 +65,7 @@ for(area in areas){
   area_stats[[area_id]][, area_name := area_name]
 }
 area_stats_dt <- rbindlist(area_stats, fill = TRUE, use.names = TRUE)
-category_weights <- 1 / colSums(area_stats_dt[!area_name %in% c(opts$test_area, opts$valid_area),-c(1:4, ncol(area_stats_dt))])
+category_weights <- 1 / colSums(area_stats_dt[!area_name %in% c(opts$test_area, opts$valid_area) , true_labels$category, with=FALSE])
 category_weights <- category_weights/sum(category_weights)
-write.csv(x = category_weights, file = paste0(opts$las_output, "category_weights.csv"))
-write.csv(x = area_stats_dt, file = paste0(opts$las_output, "area_stats.csv"))
+npySave(object = category_weights, filename = paste0(opts$npy_source, "category_weights.npy"))
+write.csv(x = area_stats_dt, file = paste0(opts$npy_source, "area_stats.csv"))
