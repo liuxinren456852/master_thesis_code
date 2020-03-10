@@ -1,6 +1,10 @@
 # Helper script to move a subset of segments to validation and test-folders
 
 suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library("ggplot2"))
+suppressPackageStartupMessages(library("data.table"))
+
+source("little_helpers.R")
 
 option_list <- list( 
   make_option(c("-s", "--source"), type = "character", 
@@ -29,7 +33,7 @@ valid_dir  <- paste0(opts$source, "Area_", nareas+2, "/")
 dir.create(test_dir)
 dir.create(valid_dir)
 
-split_stats<- data.frame(Area = areas, total = 0, tests = 0, valid = 0)
+split_stats<- data.frame(area_id = areas, total = 0, tests = 0, valid = 0)
 area_id    <- 0
 set.seed(opts$seed)
 
@@ -73,3 +77,5 @@ write(paste0("Test set of ", sum(split_stats$tests), " segments and validation s
 write.csv(split_stats, paste0("test_split_stats_t",round(opts$test_prob*100),"v",
                               round(opts$valid_prob*100), "s", opts$seed,".csv"),
           row.names = FALSE)
+
+split_stats_plot(stats_split)
