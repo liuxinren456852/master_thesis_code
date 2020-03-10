@@ -27,14 +27,14 @@ point_dist_plot <- function(data, column,true_labels, save_formats = c("png", "p
                height = 9, width = 20, units = "cm")
     })
 }
-
-map_dist_plot <- function(data,  true_labels, addname = "", save_formats = c("pdf")){
+#data = area_stats_dt[area_names, nomatch=0, on = c("area_name == area_id"), ][,area_name:=NULL]
+map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_formats = c("pdf")){
     # Little helper to plot the distribution of terrain points from omap totals
     suppressPackageStartupMessages(require(ggplot2))
     label_vec   <- setNames(true_labels$colour, true_labels$category)
     #data <- area_stats[area != "total"]
-    data <- melt(data, id.vars = "area" )
-    
+    data <- melt(data, id.vars = "area" )[variable %in% names(label_vec),]
+    nudgey <- max(data$value) / 20
     # Set theme outside fo clarity
     theme_set(theme_bw(base_family = "serif", base_size = 11) +
                   theme(axis.title.x = element_text(angle = 0, hjust = 1),
@@ -50,21 +50,23 @@ map_dist_plot <- function(data,  true_labels, addname = "", save_formats = c("pd
                         strip.background = element_rect(fill = "transparent",colour = "transparent")
                   ))
     
-    ggplot(data[variable %in% names(label_vec),], aes(x = variable, y = value, fill = variable)) + 
+    ggplot(data, aes(x = variable, y = value, fill = variable)) + 
         geom_col(col = "black", width = 0.5) +
-        geom_text(aes(label = value), nudge_y = 22000, size = 2.5, family = "serif")+
+        geom_text(aes(label = value), nudge_y = nudgey, size = 2.5, family = "serif") +
         scale_fill_manual("", values = label_vec) +
         scale_y_continuous("No. of pixels",expand = c(0,0)) +
+        scale_x_discrete(limits = names(label_vec)) + 
         labs(title = "Distribution of terrain types per map",
-             x = "") +
+             x = "", subtitle = subtitle) +
         facet_wrap(.~area, ncol = 2)
     
-        # Save specified file formats
+            # Save specified file formats
     lapply(save_formats, function(format){
-        ggsave(paste0(addname ,"omap_pixel_dist.", format), 
-               height = 11.6, width = 8.2, units = "in")
+        invisible(ggsave(paste0(addname ,"_pixel_dist.", format), 
+                         height = 11.6, width = 8.2, units = "in"))
     })
 }
+
 
 
 timing_writer <- function(init_time, end_time, seg_grp, end_grp, nobs){
@@ -113,4 +115,31 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     longcaption <- paste(shortcaption,".\nAccuracy:", round(accuracy,2), ", IoU:", round(iou,2))
     cm_label <- paste0("tab:res_",model, "_", test_area)
     xtable(conf_mat, digits = 0, caption = c(longcaption, shortcaption), label = cm_label)
+}
+
+area_names <- data.table::data.table(area_id = paste0("Area_", 1:14), 
+                         area = c("akerbo_nv","akerbo_o","akerbo_sv","grytstorp_nv",
+                                  "grytstorp_v","linkoping_s","linkoping_sv",
+                                  "linkoping_vidingsjo","prasttomta_nv","prasttomta_v",
+                                  "sodero_mitt","sodero_nv","sodero_sv","valla"))
+
+split_stats_plot <- function(split_stats){
+    # Helper to plot the split into test/validation in test_split.R
+    split_stats <- data.table(split_stats)[area_names, on = "area_id"]
+    split_stats[, train := total -(tests + valid)][, area_id := NULL][, total := NULL]
+    setcolorder(split_stats, c("area", "train", "tests", "valid"))
+    split_stats <- melt(split_stats, id.vars = "area")
+    fills <- c(train = "mediumorchid4",tests ="mediumorchid3", valid ="orchid1")
+    ggplot(split_stats, aes(x=area, y = value, fill = variable)) + 
+        geom_col(position = position_dodge2(padding=.3), col = "grey20", width = .7) +
+        scale_fill_manual("", values = fills) + 
+        theme_minimal(base_family = "serif", base_size = 11) +
+        theme(legend.position = "right", 
+              axis.text.x = element_text(angle = 30, hjust = 1, size = 11),
+              panel.grid.major.x = element_blank(),
+              panel.grid.minor.x = element_blank()) +
+        labs(x ="", y = "No. of segments", title = "No of segments per area and split") +
+        scale_y_continuous(breaks = seq(0, 200,50), minor_breaks = seq(0, 50, 10)) 
+        
+    ggsave("test_split.pdf", units= "in", height = 3.5, width= 8.2)
 }
