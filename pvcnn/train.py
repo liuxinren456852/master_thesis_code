@@ -100,7 +100,7 @@ def main():
     # train kernel
     def train(model, loader, criterion, optimizer, scheduler, current_step, writer):
         model.train()
-        for inputs, targets in tqdm(loader, desc='train', ncols=0):
+        for inputs, targets in tqdm(loader, desc='train', ncols = 65):
             if isinstance(inputs, dict):
                 for k, v in inputs.items():
                     batch_size = v.size(0)
@@ -130,7 +130,7 @@ def main():
             meters[k.format(split)] = meter()
         model.eval()
         with torch.no_grad():
-            for inputs, targets in tqdm(loader, desc=split, ncols=0):
+            for inputs, targets in tqdm(loader, desc=split, ncols = 65):
                 if isinstance(inputs, dict):
                     for k, v in inputs.items():
                         inputs[k] = v.to(configs.device, non_blocking=True)
@@ -186,7 +186,7 @@ def main():
         model = torch.nn.DataParallel(model)
     model = model.to(configs.device)
     criterion = configs.train.criterion()
-    criterion.weight = torch.FloatTensor([0.19235, 0.09149, 0.02874, 0.00862, 0.46709, 0.12408, 0.07352, 0.01175, 0.00263])
+    criterion.weight = torch.FloatTensor(np.load('category_weights.npy'))
     criterion = criterion.to(configs.device)
     optimizer = configs.train.optimizer(model.parameters())
 

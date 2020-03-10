@@ -6,7 +6,7 @@ from meters.terrain import MeterTERRAIN
 from evaluate.terrain.eval import evaluate
 from utils.config import Config, configs
 
-configs.data.num_classes = 9
+configs.data.num_classes = 8
 
 # dataset configs
 configs.dataset = Config(TERRAIN)

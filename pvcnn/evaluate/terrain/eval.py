@@ -70,8 +70,10 @@ def evaluate(configs=None):
     def print_stats(stats):
         stats = stats.sum(axis=-1)
         iou = stats[2] / (stats[0] + stats[1] - stats[2])
-        print('classes: {}'.format('  '.join(map('{:>8d}'.format, stats[0].astype(np.int64)))))
-        print('positiv: {}'.format('  '.join(map('{:>8d}'.format, stats[1].astype(np.int64)))))
+        classnames = ["roads", "water", "marsh", "opengrnd","building", "trail", "medfrst", "forest"]
+        print('clsname: {}'.format('  '.join(map('{:>8}'.format, classnames))))
+        print('truecnt: {}'.format('  '.join(map('{:>8d}'.format, stats[0].astype(np.int64)))))
+        print('predict: {}'.format('  '.join(map('{:>8d}'.format, stats[1].astype(np.int64)))))
         print('truepos: {}'.format('  '.join(map('{:>8d}'.format, stats[2].astype(np.int64)))))
         print('clssiou: {}'.format('  '.join(map('{:>8.2f}'.format, iou * 100))))
         print('meanAcc: {:4.2f}'.format(stats[2].sum() / stats[1].sum() * 100))
