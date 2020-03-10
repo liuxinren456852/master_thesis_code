@@ -62,10 +62,10 @@ for(area in areas){
   area_stats[[area_id]] <- data.table(t(c(xmax = max(seg_dt$X), xmin = min(seg_dt$X),
                                ymax = max(seg_dt$Y), ymin = min(seg_dt$Y),
                                unlist(table(true_labels[1+seg_dt$Classification, "category"])))))
-  area_stats[[area_id]][, area_name := area_name]
+  area_stats[[area_id]][, area := area_name]
 }
 area_stats_dt <- rbindlist(area_stats, fill = TRUE, use.names = TRUE)
 category_weights <- 1 / colSums(area_stats_dt[!area_name %in% c(opts$test_area, opts$valid_area) , true_labels$category, with=FALSE])
 category_weights <- category_weights/sum(category_weights)
 npySave(object = category_weights, filename = paste0(opts$npy_source, "category_weights.npy"))
-write.csv(x = area_stats_dt, file = paste0(opts$npy_source, "area_stats.csv"))
+write.csv(x = area_stats_dt, file = paste0(opts$npy_source, "area_stats.csv"), row.names = FALSE)
