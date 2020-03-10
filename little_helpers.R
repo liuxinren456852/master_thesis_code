@@ -95,7 +95,7 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
 
 confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     if(is.null(cm_path)){
-        cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".area",test_area,"]/best.conf_mat.npy")
+        cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".",test_area,"]/best.conf_mat.npy")
     }
     # Helper to print the conf-matrix outout of eval in a slightly prettier way
     #"/home/guslun/master_thesis_code/pvcnn/runs/[configs+terrain.pointnet.area9]/best.conf_mat.npy"
@@ -105,12 +105,28 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     
     true_labels <- create_true_labels()
     
-    conf_mat <- npyLoad(cm_path)
+    conf_mat     <- npyLoad(cm_path)
     dimnames(conf_mat) <- list(true_labels$category, true_labels$category)
-    accuracy <- sum(diag(conf_mat))/sum(conf_mat)
-    iou <- mean(diag(conf_mat) / (rowSums(conf_mat) + colSums(conf_mat) - diag(conf_mat)))
+    rsums        <- rowSums(conf_mat)
+    csums        <- colSums(conf_mat)
+    truepos      <- diag(conf_mat)
+    classacc     <- round(truepos / csums,2)
+    totalacc     <- round(sum(truepos)/sum(conf_mat),2)
+    classiou     <- round(truepos / (rsums + csums - truepos),2)
+    rlabs        <- c(true_labels$category, "Total", "Accuracy", "IoU")
+    clabs        <- c(true_labels$category, "Total/Avg")
+    
+    char_mat     <- rbind(conf_mat, as.character(csums), as.character(classacc), as.character(classiou))
+    char_mat     <- cbind(char_mat, c(rsums, sum(conf_mat), totalacc, round(mean(classiou),2)))
+    
+    for(col in seq_along(true_labels)){
+        char_mat[col,col] <- paste0("\\colorbox{red}{", char_mat[col,col], "}")
+        gt_truepos <- which(conf_mat[, col] > diag(conf_mat)[col])
+        char_mat[gt_truepos, col] <- paste0("\\colorbox{blue}{", char_mat[gt_truepos,col], "}")
+    }
+    
     shortcaption <- paste("Confusion matrix for", model, "tested on area", test_area)
-    longcaption <- paste(shortcaption,".\nAccuracy:", round(accuracy,2), ", IoU:", round(iou,2))
-    cm_label <- paste0("tab:res_",model, "_", test_area)
+    longcaption  <- paste(shortcaption,".\nAccuracy:", totalacc, ", IoU:", round(mean(classiou),2))
+    cm_label     <- paste0("tab:res_",model, "_", test_area)
     xtable(conf_mat, digits = 0, caption = c(longcaption, shortcaption), label = cm_label)
 }
