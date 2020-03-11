@@ -27,6 +27,7 @@ point_dist_plot <- function(data, column,true_labels, save_formats = c("png", "p
                height = 9, width = 20, units = "cm")
     })
 }
+
 #data = area_stats_dt[area_names, nomatch=0, on = c("area_name == area_id"), ][,area_name:=NULL]
 map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_formats = c("pdf")){
     # Little helper to plot the distribution of terrain points from omap totals
@@ -41,7 +42,7 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
                         # axis.title.y = element_text(angle = 90, vjust = 1, hjust = 1, 
                         #                             margin = margin(0,-20,0,0)),
                         legend.position = "none",
-                        axis.text.x = element_text(angle = 30, hjust = 1, size = 11),
+                        axis.text.x = element_text(angle = 30, hjust = 1),
                         panel.grid.major.x = element_blank(),
                         panel.grid.minor.x = element_blank(),
                         panel.grid.minor.y = element_blank(),
@@ -52,18 +53,18 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
     
     ggplot(data, aes(x = variable, y = value, fill = variable)) + 
         geom_col(col = "black", width = 0.5) +
-        geom_text(aes(label = value), nudge_y = nudgey, size = 2.5, family = "serif") +
+        geom_text(aes(label = round(value,2)), nudge_y = nudgey, size = 2.5, family = "serif") +
         scale_fill_manual("", values = label_vec) +
-        scale_y_continuous("No. of pixels",expand = c(0,0)) +
+        scale_y_continuous("Proportion",expand = c(0,0), limits = c(0,0.7)) +
         scale_x_discrete(limits = names(label_vec)) + 
-        labs(title = "Distribution of terrain types per map",
+        labs(title = "Distribution of terrain types per split",
              x = "", subtitle = subtitle) +
-        facet_wrap(.~area, ncol = 2)
+        facet_wrap(.~area, ncol = 3)
     
             # Save specified file formats
     lapply(save_formats, function(format){
         invisible(ggsave(paste0(addname ,"_pixel_dist.", format), 
-                         height = 11.6, width = 8.2, units = "in"))
+                         height = 11*0.3, width = 8.5, units = "in"))
     })
 }
 
@@ -96,17 +97,30 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
 }
 
 confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
+    # Helper to print the conf-matrix outout of eval in a slightly prettier way
+    # Requires the following in the LATEX preamble
+    # \usepackage{booktabs}
+    # \usepackage{xcolor}
+    # \usepackage{changepage}
+    #
+    # \definecolor{truepositive}{HTML}{DBBEE8}
+    # \definecolor{majorerror}{HTML}{5B127A}
+    # 
+    # \newenvironment{widetable}
+    # {\begin{table}[ht] \begin{adjustwidth}{-1in}{-1in} }
+    # {\end{adjustwidth} \end{table}}
+    # 
     if(is.null(cm_path)){
         cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".",test_area,"]/best.conf_mat.npy")
+    } else {
+        model <- test_area <- "unknown"
     }
-    # Helper to print the conf-matrix outout of eval in a slightly prettier way
-    #"/home/guslun/master_thesis_code/pvcnn/runs/[configs+terrain.pointnet.area9]/best.conf_mat.npy"
+
     suppressPackageStartupMessages(library(RcppCNPy))
     suppressPackageStartupMessages(library(xtable))
     source("true_colour_codes.R")
     
-    true_labels <- create_true_labels()
-    
+    true_labels <- create_true_labels()$category
     conf_mat     <- npyLoad(cm_path)
     
     rsums        <- rowSums(conf_mat)
@@ -115,8 +129,8 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     classacc     <- round(truepos / csums,2)
     totalacc     <- round(sum(truepos)/sum(conf_mat),2)
     classiou     <- round(truepos / (rsums + csums - truepos),2)
-    rlabs        <- c(true_labels$category, "Total", "Accuracy", "IoU")
-    clabs        <- c(true_labels$category)
+    rlabs        <- c(true_labels, "Total", "Accuracy", "IoU")
+    clabs        <- c(true_labels)
     
     char_mat     <- rbind(conf_mat, as.character(csums), as.character(classacc), as.character(classiou))
 
@@ -126,8 +140,8 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
         char_mat[gt_truepos, col] <- paste0("\\textcolor{majorerror}{\\textbf{", char_mat[gt_truepos,col], "}}")
     }
     dimnames(char_mat) <- list(rlabs, clabs)
-    shortcaption <- paste("Confusion matrix for", model, "tested on area", test_area)
-    longcaption  <- paste(shortcaption,".\nAccuracy:", totalacc, ", IoU:", round(mean(classiou),2))
+    shortcaption <- paste("Confusion matrix for", model, "evaluated on", test_area)
+    longcaption  <- paste("\\centering ", shortcaption,".\nAccuracy:", totalacc, ", IoU:", round(mean(classiou),2))
     cm_label     <- paste0("tab:res_",model, "_", test_area)
     
     print.xtable(xtable(char_mat, digits = 0, 
@@ -137,14 +151,16 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
                  add.to.row = list(pos=list(8), command = c("\\midrule ")),
                  sanitize.text.function = function(x){x},
                  floating.environment = "widetable",
-                 table.placement = NULL)
+                 table.placement = NULL,
+                 caption.placement = "top")
 }
 
-area_names <- data.table::data.table(area_id = paste0("Area_", 1:14), 
+area_names <- data.table::data.table(area_id = paste0("Area_", 1:16), 
                          area = c("akerbo_nv","akerbo_o","akerbo_sv","grytstorp_nv",
                                   "grytstorp_v","linkoping_s","linkoping_sv",
                                   "linkoping_vidingsjo","prasttomta_nv","prasttomta_v",
-                                  "sodero_mitt","sodero_nv","sodero_sv","valla"))
+                                  "sodero_mitt","sodero_nv","sodero_sv","valla",
+                                  "test_set", "validation_set"))
 
 split_stats_plot <- function(split_stats){
     # Helper to plot the split into test/validation in test_split.R
