@@ -16,9 +16,9 @@ create_true_labels <- function(){
     255,  255,  255  
   ))/255
   ccodes <- data.table(col_codes)[, colour := rgb(R,G,B)]
-  ccodes[, category := c("roads", "water", "marsh", "openground", 
+  ccodes[, category := c("roads", "water", "marsh", "openland", 
                          "unuseddenseforest", "building", "trail", "unused", 
-                         "mediumforest", "unused", "unusedmountains" , "forest")]
+                         "medforest", "unused", "unusedmountains" , "forest")]
   
   ccodes[!grepl(x = ccodes$category, pattern = "unused"), ][, ID:= 0:(.N-1)]
 }
