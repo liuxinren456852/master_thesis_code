@@ -108,7 +108,7 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     true_labels <- create_true_labels()
     
     conf_mat     <- npyLoad(cm_path)
-    dimnames(conf_mat) <- list(true_labels$category, true_labels$category)
+    
     rsums        <- rowSums(conf_mat)
     csums        <- colSums(conf_mat)
     truepos      <- diag(conf_mat)
@@ -116,21 +116,28 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     totalacc     <- round(sum(truepos)/sum(conf_mat),2)
     classiou     <- round(truepos / (rsums + csums - truepos),2)
     rlabs        <- c(true_labels$category, "Total", "Accuracy", "IoU")
-    clabs        <- c(true_labels$category, "Total/Avg")
+    clabs        <- c(true_labels$category)
     
     char_mat     <- rbind(conf_mat, as.character(csums), as.character(classacc), as.character(classiou))
-    char_mat     <- cbind(char_mat, c(rsums, sum(conf_mat), totalacc, round(mean(classiou),2)))
-    
-    for(col in seq_along(true_labels)){
-        char_mat[col,col] <- paste0("\\colorbox{red}{", char_mat[col,col], "}")
+
+    for(col in seq(1,nrow(true_labels))){
+        char_mat[col,col] <- paste0("\\colorbox{truepositive}{", char_mat[col,col], "}")
         gt_truepos <- which(conf_mat[, col] > diag(conf_mat)[col])
-        char_mat[gt_truepos, col] <- paste0("\\colorbox{blue}{", char_mat[gt_truepos,col], "}")
+        char_mat[gt_truepos, col] <- paste0("\\textcolor{majorerror}{\\textbf{", char_mat[gt_truepos,col], "}}")
     }
-    
+    dimnames(char_mat) <- list(rlabs, clabs)
     shortcaption <- paste("Confusion matrix for", model, "tested on area", test_area)
     longcaption  <- paste(shortcaption,".\nAccuracy:", totalacc, ", IoU:", round(mean(classiou),2))
     cm_label     <- paste0("tab:res_",model, "_", test_area)
-    xtable(conf_mat, digits = 0, caption = c(longcaption, shortcaption), label = cm_label)
+    
+    print.xtable(xtable(char_mat, digits = 0, 
+                        caption = c(longcaption, shortcaption), 
+                        label = cm_label, align = c("l",rep("r", ncol(char_mat)))),
+                 booktabs = TRUE, 
+                 add.to.row = list(pos=list(8), command = c("\\midrule ")),
+                 sanitize.text.function = function(x){x},
+                 floating.environment = "widetable",
+                 table.placement = NULL)
 }
 
 area_names <- data.table::data.table(area_id = paste0("Area_", 1:14), 
