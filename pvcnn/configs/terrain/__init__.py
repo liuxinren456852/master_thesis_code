@@ -19,13 +19,13 @@ configs.dataset.with_normalized_coords = True
 configs.evaluate = Config()
 configs.evaluate.fn = evaluate
 configs.evaluate.num_votes = 10
-configs.evaluate.batch_size = 6
+# configs.evaluate.batch_size = 16 # moved to the models instead
 configs.evaluate.dataset = Config(split='test')
 
 # train configs
 configs.train = Config()
 configs.train.num_epochs = 4
-#configs.train.batch_size = 16 moved to the models instead
+# configs.train.batch_size = 16 moved to the models instead
 
 # train: meters
 configs.train.meters = Config()

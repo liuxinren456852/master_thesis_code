@@ -15,3 +15,4 @@ configs.train.scheduler = Config(optim.lr_scheduler.CosineAnnealingLR)
 configs.train.scheduler.T_max = configs.train.num_epochs
 
 configs.train.batch_size = 16
+configs.evaluate.batch_size = 16
