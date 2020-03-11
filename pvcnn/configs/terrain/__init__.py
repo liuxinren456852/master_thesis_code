@@ -25,7 +25,7 @@ configs.evaluate.dataset = Config(split='test')
 # train configs
 configs.train = Config()
 configs.train.num_epochs = 4
-configs.train.batch_size = 16
+#configs.train.batch_size = 16 moved to the models instead
 
 # train: meters
 configs.train.meters = Config()

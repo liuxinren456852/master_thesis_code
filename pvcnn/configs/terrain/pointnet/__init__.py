@@ -9,6 +9,8 @@ configs.model.num_classes = configs.data.num_classes
 configs.model.extra_feature_channels = 7
 configs.dataset.num_points = 8196
 
+configs.train.batch_size = 16
+
 # configs.train.scheduler = Config(optim.lr_scheduler.StepLR)
 # configs.train.scheduler.step_size = 5  # learning rate clip = 1e-5
 configs.train.scheduler = Config(optim.lr_scheduler.MultiStepLR)
