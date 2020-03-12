@@ -8,7 +8,7 @@
   # Reads png-map into data.table
   map_dt <- dcast(as.data.table(readPNG(paste0(mapname,".png"))), 
                   V1 + V2 ~ V3, value.var = "value")
-  setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B", "A"))
+  setnames(map_dt, names(map_dt), c("pY", "pX", "R", "G", "B", "A")[1:length(names(map_dt))])
   return(map_dt)
 }
 
@@ -33,7 +33,7 @@ png_map_reader <- function(mapfile, true_categories){
   # Adds X and Y to map data. Pixelcoords kept to enable plotting
   map_dt[, c("X", "Y") := map_xy][, colour := rgb(map_dt[,.(R,G,B)])]
   map_dt[, c("cat_colour") := true_categories[cat_dists, .(colour)]]
-  map_dt[, c("category") := cat_dists-1]
+  map_dt[, c("category") := true_categories[cat_dists, .(ID)]]
   setcolorder(map_dt, c("X", "Y", "category", "R", "G", "B", "colour", "cat_colour", "pX", "pY"))
   setkey(map_dt, X, Y)
   return(map_dt)
