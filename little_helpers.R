@@ -86,14 +86,14 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
     setkeyv(map, c(x,y))
     colmat <- col2rgb(unlist(map[, ..colour]))/255
     # Using coordinates here will require massive memory... hence pX,pY
-    map_array <- array(dim = c(max(map[,..y]), 
-                               max(map[,..x]),
+    map_array <- array(dim = c(max(map[,..y]-min(map[,..y])+1), 
+                               max(map[,..x]-min(map[,..x])+1),
                                3))
     map_array[,,1] <- colmat[1, ]
     map_array[,,2] <- colmat[2, ]
     map_array[,,3] <- colmat[3, ]
     setkeyv(map, oldkey)
-    png::writePNG(map_array, paste0(dirname, "_", colour, "_map.png"))
+    png::writePNG(image = map_array, target = paste0(dirname, "_", colour, "_map.png"), dpi = 150)
 }
 
 confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
