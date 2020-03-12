@@ -41,15 +41,19 @@ for(area in areas){
   area_idx    <- area_idx + 1
   area_init   <- Sys.time()
   curr_source <- paste0(source_dir, area, "/")
-
+  curr_output <- paste0(output_dir, area, "/")
+  if(!dir.exists(curr_output)) {dir.create(curr_output)}
+  
   # Read Omap-png and create grid for lookup from that
   mapname    <- dir(curr_source,".png$") 
   omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), 
                                true_categories = true_labels)
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
   
-  # save map the map to file
-  map_dt_plot(omap, colour = "cat_colour", dirname = paste0(output_dir, area))
+  # save map the map to file and copy world file
+  map_dt_plot(omap, colour = "cat_colour", dirname = paste0(curr_output, area))
+  file.copy(from = dir(path = curr_source, pattern = ".pgw$", full.names = TRUE), 
+            to = paste0(curr_output, area, "_cat_colour_map.pgw"))
   
   # calc stats
   map_count  <- factor(omap$category, levels = true_labels$ID)
