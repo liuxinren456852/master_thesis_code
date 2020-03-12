@@ -1,5 +1,14 @@
 # The below functions make heavy use of data.table and it's speed, don't even consider
 # rewriting this with dplyr, it takes forever to do a couple of million filter()-calls.
+.dt_subset  <- function(limit_data, data){
+  x <- lapply(seq(1:nrow(limit_data)), function(row){
+    xylim <- unlist(limit_data[row, ])
+    data[X >= xylim["xmin"] & X < xylim["xmax"] &
+         Y >= xylim["ymin"] & Y < xylim["ymax"]]
+  })
+  names(x) <- paste0("segment_", limit_data$rownum)
+  x
+}
 
 .dt_closest <- function(xy, target_data, target_tol = 1){
   # Retrieves RGB-values from target data for point in target data closest to given
