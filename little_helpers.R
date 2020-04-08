@@ -96,7 +96,7 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
     png::writePNG(image = map_array, target = paste0(dirname, "_", colour, "_map.png"), dpi = 150)
 }
 
-confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
+confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL){
     # Helper to print the conf-matrix outout of eval in a slightly prettier way
     # Requires the following in the LATEX preamble
     # \usepackage{booktabs}
@@ -112,9 +112,10 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     # 
     if(is.null(cm_path)){
         cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".",test_area,"]/best.conf_mat.npy")
-    } else {
-        model <- test_area <- "unknown"
-    }
+    } 
+    if(is.null(model)){ model <- "unknown" }
+    if(is.null(test_area)){ test_area <- "unknown" }
+    
 
     suppressPackageStartupMessages(library(RcppCNPy))
     suppressPackageStartupMessages(library(xtable))
@@ -134,7 +135,7 @@ confusion_matrix_xtable <- function(model, test_area, cm_path=NULL){
     
     char_mat     <- rbind(conf_mat, as.character(csums), as.character(classacc), as.character(classiou))
 
-    for(col in seq(1,nrow(true_labels))){
+    for(col in seq(1,length(true_labels))){
         char_mat[col,col] <- paste0("\\colorbox{truepositive}{", char_mat[col,col], "}")
         gt_truepos <- which(conf_mat[, col] > diag(conf_mat)[col])
         char_mat[gt_truepos, col] <- paste0("\\textcolor{majorerror}{\\textbf{", char_mat[gt_truepos,col], "}}")
