@@ -32,8 +32,8 @@ true_labels<- create_true_labels()
 areas      <- dir(source_dir)
 areas      <- areas[!areas %in% c("_laserdata", "_ytmodell", "_other")]
 area_idx   <- 0
-area_stats <- data.table::data.table(matrix(nrow = 0, ncol = nrow(true_labels)+4))
-setnames(area_stats, c(true_labels$category, "xsize", "ysize", "size", "seg_count"))
+area_stats <- data.table::data.table(matrix(nrow = 0, ncol = nrow(true_labels)+6))
+setnames(area_stats, c(true_labels$category, "xsize", "ysize", "xmin", "ymin", "size", "seg_count"))
 
 if(!dir.exists(output_dir)) {dir.create(output_dir)}
 
@@ -63,6 +63,8 @@ for(area in areas){
   
   area_stats <- rbind(area_stats, 
                       t(c(table(map_count), 
+                          xmin = min(omap$X),
+                          ymin = min(omap$Y),
                           xsize = xsize, 
                           ysize = ysize, 
                           size = xsize*ysize,
