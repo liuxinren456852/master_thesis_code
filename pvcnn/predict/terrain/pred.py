@@ -8,7 +8,7 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-__all__ = ['evaluate']
+__all__ = ['predict']
 
 
 def prepare():
@@ -41,19 +41,19 @@ def prepare():
     else:
         configs.device = 'cuda'
         configs.device_ids = gpus
-    configs.dataset.split = configs.evaluate.dataset.split
-    if 'best_checkpoint_path' not in configs.evaluate or configs.evaluate.best_checkpoint_path is None:
+    configs.dataset.split = configs.predict.dataset.split
+    if 'best_checkpoint_path' not in configs.predict or configs.predict.best_checkpoint_path is None:
         if 'best_checkpoint_path' in configs.train and configs.train.best_checkpoint_path is not None:
-            configs.evaluate.best_checkpoint_path = configs.train.best_checkpoint_path
+            configs.predict.best_checkpoint_path = configs.train.best_checkpoint_path
         else:
-            configs.evaluate.best_checkpoint_path = os.path.join(configs.train.save_path, 'best.pth.tar')
-    assert configs.evaluate.best_checkpoint_path.endswith('.pth.tar')
-    configs.evaluate.stats_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.eval.npy')
+            configs.predict.best_checkpoint_path = os.path.join(configs.train.save_path, 'best.pth.tar')
+    assert configs.predict.best_checkpoint_path.endswith('.pth.tar')
+    configs.predict.stats_path = configs.predict.best_checkpoint_path.replace('.pth.tar', '.eval.npy')
 
     return configs
 
 
-def evaluate(configs=None):
+def predict(configs=None):
     configs = prepare() if configs is None else configs
 
     import h5py
@@ -97,10 +97,10 @@ def evaluate(configs=None):
 
     print(configs)
 
-    if os.path.exists(configs.evaluate.stats_path):
-        stats = np.load(configs.evaluate.stats_path)
-        print_stats(stats)
-        return
+    # if os.path.exists(configs.evaluate.stats_path):
+    #     stats = np.load(configs.evaluate.stats_path)
+    #     print_stats(stats)
+    #     return
 
     #################################
     # Initialize DataLoaders, Model #
@@ -115,9 +115,9 @@ def evaluate(configs=None):
         model = torch.nn.DataParallel(model)
     model = model.to(configs.device)
 
-    if os.path.exists(configs.evaluate.best_checkpoint_path):
-        print(f'==> loading checkpoint "{configs.evaluate.best_checkpoint_path}"')
-        checkpoint = torch.load(configs.evaluate.best_checkpoint_path)
+    if os.path.exists(configs.predict.best_checkpoint_path):
+        print(f'==> loading checkpoint "{configs.predict.best_checkpoint_path}"')
+        checkpoint = torch.load(configs.predict.best_checkpoint_path)
         model.load_state_dict(checkpoint.pop('model'))
         del checkpoint
     else:
@@ -130,10 +130,10 @@ def evaluate(configs=None):
     ##############
 
     total_num_scenes = len(dataset.scene_list)
-    stats = np.zeros((3, configs.data.num_classes, total_num_scenes))
-    conf_mat = np.zeros((configs.data.num_classes, configs.data.num_classes))
+    #stats = np.zeros((3, configs.data.num_classes, total_num_scenes))
+    #conf_mat = np.zeros((configs.data.num_classes, configs.data.num_classes))
 
-    for scene_index, (scene, scene_files) in enumerate(tqdm(dataset.scene_list.items(), desc='eval', ncols=0)):
+    for scene_index, (scene, scene_files) in enumerate(tqdm(dataset.scene_list.items(), desc='Predicting', ncols=0)):
         ground_truth = np.load(os.path.join(scene, 'label.npy')).reshape(-1)
         total_num_points_in_scene = ground_truth.shape[0]
         confidences = np.zeros(total_num_points_in_scene, dtype=np.float32)
@@ -147,11 +147,11 @@ def evaluate(configs=None):
             window_to_scene_mapping = h5f['indices_split_to_full'][...].astype(np.int64)
 
             num_windows, max_num_points_per_window, num_channels = scene_data.shape
-            extra_batch_size = configs.evaluate.num_votes * math.ceil(max_num_points_per_window / dataset.num_points)
+            extra_batch_size = configs.predict.num_votes * math.ceil(max_num_points_per_window / dataset.num_points)
             total_num_voted_points = extra_batch_size * dataset.num_points
 
-            for min_window_index in range(0, num_windows, configs.evaluate.batch_size):
-                max_window_index = min(min_window_index + configs.evaluate.batch_size, num_windows)
+            for min_window_index in range(0, num_windows, configs.predict.batch_size):
+                max_window_index = min(min_window_index + configs.predict.batch_size, num_windows)
                 batch_size = max_window_index - min_window_index
                 window_data = scene_data[np.arange(min_window_index, max_window_index)]
                 window_data = window_data.reshape(batch_size, -1, num_channels)
@@ -159,7 +159,6 @@ def evaluate(configs=None):
                 # repeat, shuffle and tile
                 # TODO: speedup here
                 batched_inputs = np.zeros((batch_size, total_num_voted_points, num_channels), dtype=np.float32)
-                print(batched_inputs.shape)
                 batched_shuffled_point_indices = np.zeros((batch_size, total_num_voted_points), dtype=np.int64)
                 for relative_window_index in range(batch_size):
                     num_points_in_window = scene_num_points[relative_window_index + min_window_index]
@@ -174,22 +173,14 @@ def evaluate(configs=None):
                 inputs = torch.from_numpy(
                     batched_inputs.reshape((batch_size * extra_batch_size, dataset.num_points, -1)).transpose(0, 2, 1)
                 ).float().to(configs.device)
-                print(inputs.shape)
                 with torch.no_grad():
                     # cofidence och pred kommer från max(), inte softmax, och är värdet samt index för maxvärdet i softmax.
                     batched_probs = F.softmax(model(inputs), dim=1)
                     batched_confidences, batched_predictions = batched_probs.max(dim=1)
                     batched_entropies = torch.sum(-batched_probs * torch.log(batched_probs), dim=1)
-                    # print(batched_confidences.shape)
-                    # print(batched_predictions.shape)
-                    # print(batched_probs.shape)
-                    # print(batched_entropies.shape)
                     batched_confidences = batched_confidences.view(batch_size, total_num_voted_points).cpu().numpy()
                     batched_predictions = batched_predictions.view(batch_size, total_num_voted_points).cpu().numpy()
                     batched_entropies = batched_entropies.view(batch_size, total_num_voted_points).cpu().numpy()
-                    # print(batched_confidences.shape)
-                    # print(batched_predictions.shape)
-                    # print(batched_entropies.shape)
 
                 update_scene_predictions(batched_confidences, batched_predictions, batched_shuffled_point_indices,
                                          confidences, predictions, window_to_scene_mapping,
@@ -198,16 +189,17 @@ def evaluate(configs=None):
 
 
         # update stats
-        update_stats(stats, ground_truth, predictions, scene_index, total_num_points_in_scene)
-        update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_scene)
+        # update_stats(stats, ground_truth, predictions, scene_index, total_num_points_in_scene)
+        # update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_scene)
 
         np.save(os.path.join(scene, 'preds.npy'), predictions.astype(float))
         np.save(os.path.join(scene, 'entropy.npy'), entropies.astype(float))
 
 
-    np.save(configs.evaluate.stats_path, stats)
-    np.save(configs.evaluate.conf_mat_path, conf_mat)
-    print_stats(stats)
+    # np.save(configs.evaluate.stats_path, stats)
+    # np.save(configs.evaluate.conf_mat_path, conf_mat)
+    # print_stats(stats)
+    print("Done!")
 
 
 @numba.jit()
@@ -248,4 +240,4 @@ def update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_sce
         conf_mat[pd, gt] += 1
 
 if __name__ == '__main__':
-    evaluate()
+    predict()

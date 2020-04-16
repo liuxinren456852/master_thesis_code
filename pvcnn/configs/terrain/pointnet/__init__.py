@@ -17,5 +17,5 @@ configs.train.scheduler = Config(optim.lr_scheduler.MultiStepLR)
 configs.train.scheduler.milestones = [5, 10, 15, 20, 25, 30, 35]
 configs.train.scheduler.gamma = 0.5
 
-configs.train.batch_size = 16
-configs.evaluate.batch_size = 6
+configs.train.batch_size = 32
+configs.evaluate.batch_size = 8

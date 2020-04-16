@@ -4,6 +4,7 @@ import torch.optim as optim
 from datasets.terrain import TERRAIN
 from meters.terrain import MeterTERRAIN
 from evaluate.terrain.eval import evaluate
+from predict.terrain.pred import predict
 from utils.config import Config, configs
 
 configs.data.num_classes = 8
@@ -22,6 +23,14 @@ configs.evaluate.num_votes = 10
 # configs.evaluate.batch_size = 16 # moved to the models instead
 configs.evaluate.dataset = Config(split='test')
 
+# predict configs
+configs.predict = Config()
+configs.predict.fn = predict
+configs.predict.root = 'data/terrain/predict'
+configs.predict.num_votes = 1
+configs.predict.dataset = Config(split='test')
+configs.predict.batch_size = 1
+
 # train configs
 configs.train = Config()
 configs.train.num_epochs = 4
@@ -36,7 +45,6 @@ configs.train.meters['acc/acc_{}'] = Config(MeterTERRAIN, metric='overall', num_
 configs.train.metric = 'acc/iou_test'
 
 # train: criterion
-
 configs.train.criterion = Config(nn.CrossEntropyLoss)
 
 # train: optimizer

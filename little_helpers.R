@@ -183,3 +183,30 @@ split_stats_plot <- function(split_stats){
         
     ggsave("test_split.pdf", units= "in", height = 3.5, width= 8.2)
 }
+
+
+subset_omap <- function(omap_list, area_id, bounds){
+  omap_list[[area_id]]$map[X >= bounds$xmin & X <= bounds$xmax &
+                             Y  >= bounds$ymin & Y <= bounds$ymax]
+}
+
+dt_mode <- function(x, w = NULL){
+    if(is.null(w)){
+        # Count by x, sort and return first/most common
+        data.table(x=x)[, .N, by = x][order(-N)][1,x]
+    } else {
+        # Avg weight by category, sort and return first/lowest
+        data.table(x=x, w=w)[, mean(w), by = x][order(V1)][1,x]
+    }
+}
+
+filtered_mode <- function(x, w, thresh){
+  # Avg weight by category, sort and return first/lowest
+  top_class <- data.table(x=x, w=w)[w <= thresh , mean(w^2), by = x][order(V1)][1,x]
+  if(length(top_class)==0){ return(NA) } else { return(top_class) }
+}
+
+filtered_mean <- function(x, thresh){
+  mean(x[x<=thresh])
+}
+

@@ -2,6 +2,7 @@ import argparse
 import os
 import random
 import shutil
+import hiddenlayer as hl
 
 
 def prepare():
@@ -14,6 +15,8 @@ def prepare():
     parser.add_argument('configs', nargs='+')
     parser.add_argument('--devices', default=None)
     parser.add_argument('--evaluate', default=False, action='store_true')
+    parser.add_argument('--predict', default=False, action='store_true')
+    parser.add_argument('--pred_root', default=None)
     parser.add_argument('--epochs', default=None)
     args, opts = parser.parse_known_args()
     if args.devices is not None and args.devices != 'cpu':
@@ -40,8 +43,16 @@ def prepare():
                 configs.dataset[k] = v
     else:
         configs.evaluate = None
+        
+    if args.predict and configs.predict.fn is not None:
+        if 'dataset' in configs.predict:
+            for k, v in configs.predict.dataset.items():
+                configs.dataset[k] = v
+    else:
+        configs.predict = None
+        
 
-    if configs.evaluate is None:
+    if configs.evaluate is None and configs.predict is None:
         metrics = []
         if 'metric' in configs.train and configs.train.metric is not None:
             metrics.append(configs.train.metric)
@@ -63,6 +74,17 @@ def prepare():
         }
         os.makedirs(os.path.dirname(configs.train.checkpoints_path), exist_ok=True)
         os.makedirs(best_checkpoints_dir, exist_ok=True)
+    elif configs.evaluate is None and configs.predict is not None:
+        configs.dataset.root = configs.predict.root
+        if 'best_checkpoint_path' not in configs.predict or configs.predict.best_checkpoint_path is None:
+            if 'best_checkpoint_path' in configs.train and configs.train.best_checkpoint_path is not None:
+                configs.predict.best_checkpoint_path = configs.train.best_checkpoint_path
+            else:
+                configs.predict.best_checkpoint_path = os.path.join(configs.train.save_path, 'best.pth.tar')
+        assert configs.predict.best_checkpoint_path.endswith('.pth.tar')
+        configs.predict.predictions_path = configs.predict.best_checkpoint_path.replace('.pth.tar', '.predictions')
+        configs.predict.stats_path = configs.predict.best_checkpoint_path.replace('.pth.tar', '_area_' + str(configs.dataset.holdout_area) + '.eval.npy')
+        configs.predict.conf_mat_path = configs.predict.best_checkpoint_path.replace('.pth.tar', '_area_' + str(configs.dataset.holdout_area) + '.conf_mat.npy')
     else:
         if 'best_checkpoint_path' not in configs.evaluate or configs.evaluate.best_checkpoint_path is None:
             if 'best_checkpoint_path' in configs.train and configs.train.best_checkpoint_path is not None:
@@ -71,8 +93,8 @@ def prepare():
                 configs.evaluate.best_checkpoint_path = os.path.join(configs.train.save_path, 'best.pth.tar')
         assert configs.evaluate.best_checkpoint_path.endswith('.pth.tar')
         configs.evaluate.predictions_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.predictions')
-        configs.evaluate.stats_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.eval.npy')
-        configs.evaluate.conf_mat_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '.conf_mat.npy')
+        configs.evaluate.stats_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '_area_' + str(configs.dataset.holdout_area) + '.eval.npy')
+        configs.evaluate.conf_mat_path = configs.evaluate.best_checkpoint_path.replace('.pth.tar', '_area_' + str(configs.dataset.holdout_area) + '.conf_mat.npy')
 
     if args.epochs is not None:
         configs.train.num_epochs = int(args.epochs)
@@ -85,7 +107,11 @@ def main():
     if configs.evaluate is not None:
         configs.evaluate.fn(configs)
         return
-
+        
+    if configs.predict is not None:
+        configs.predict.fn(configs)
+        return
+        
     import numpy as np
     import tensorboardX
     import torch
@@ -211,6 +237,12 @@ def main():
         scheduler = configs.train.scheduler(optimizer)
     else:
         scheduler = None
+    
+    # print("\n==>Model:")
+    # print(model)
+    # print("End model definition\n")
+    
+    hl.build_graph(model, torch.zeros([1, 3, 224, 224]))
 
     ############
     # Training #
