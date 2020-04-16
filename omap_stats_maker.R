@@ -1,7 +1,7 @@
 suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
-  make_option(c("-m", "--source_dir"), type="character", default="~/kartor/", 
+  make_option(c("-m", "--source_dir"), type="character", default="kartor/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "source_dir"),
   make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/omap_stats/"),
@@ -42,6 +42,7 @@ for(area in areas){
   area_init   <- Sys.time()
   curr_source <- paste0(source_dir, area, "/")
   curr_output <- paste0(output_dir, area, "/")
+  print()
   if(!dir.exists(curr_output)) {dir.create(curr_output)}
   
   # Read Omap-png and create grid for lookup from that
@@ -54,6 +55,7 @@ for(area in areas){
   map_dt_plot(omap, colour = "cat_colour", dirname = paste0(curr_output, area))
   file.copy(from = dir(path = curr_source, pattern = ".pgw$", full.names = TRUE), 
             to = paste0(curr_output, area, "_cat_colour_map.pgw"))
+  save(omap, file = paste0(curr_output, area, "_cat_colour.Rdata"))
   
   # calc stats
   map_count  <- factor(omap$category, levels = true_labels$ID)
