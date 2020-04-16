@@ -41,9 +41,11 @@ vignettes/*.pdf
 /area_output/
 *ipynb*
 /pvcnn/runs/*
-.pyc
+*.pyc
 __pycache__
 *.idea
 pvcnn/data/terrain/h5_*/
 pvcnn/configs/terrain/__pycache__/
-
+*.labels
+*.dataset
+*.h5
