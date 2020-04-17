@@ -2,22 +2,22 @@ suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
 
-  make_option(c("-m", "--map_source"), type = "character", default="~/kartor/", 
+  make_option(c("-m", "--map_source"), type = "character", default="~/master_thesis_code/omap_cleaned/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "map_source"),
-  make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/area_output/"),
+  make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/area_output2/"),
               help = "Directory where to output treated files. [default %default]",
               dest = "output_dir"),
-  make_option(c("-l", "--las_source"), type = "character", default = "~/laslager/",
+  make_option(c("-l", "--las_source"), type = "character", default = "/media/gustav/storage/laslager/",
               help = "Directory where lasfiles are located [default %default]",
               dest = "las_source"),
-  make_option(c("-s", "--seg_size"), type = "integer", default = 100,
+  make_option(c("-s", "--seg_size"), type = "integer", default = 120,
               help = "Size of chunks to be processed and represent sub area [default %default]",
               dest = "seg_size"),
-  make_option(c("-r", "--runmode"), type = "character", default = "21",
+  make_option(c("-r", "--runmode"), type = "character", default = "all",
               help = "Maximum number of segments to run. Non-integer to run all [default %default]",
               dest = "runmode"),
-  make_option(c("-c", "--cores"), type = "integer", default = 6,
+  make_option(c("-c", "--cores"), type = "integer", default = parallel::detectCores()-1,
               help = "Number of cores to use [default %default]",
               dest = "num_cores")
   )
@@ -74,14 +74,23 @@ for(area in areas){
   }
   las_cat     <- catalog(paste0(curr_las_sc, "laserdata"))
   sfm_cat     <- catalog(paste0(curr_las_sc, "ytmodell"))
+
   curr_las_zlim <- unlist(las_zlim[las_zlim$main_area==main_area,c(2,3)])
   if(length(curr_las_zlim)==0) { curr_las_zlim <- setNames(c(0,250),c("min", "max")) }
   if(!dir.exists(curr_output)) { dir.create(curr_output) }
   
   # Read Omap-png and create grid for lookup from that
-  mapname     <- dir(curr_map_sc,".png$") 
-  omap        <- png_map_reader(mapfile = paste0(curr_map_sc, mapname), 
-                                true_categories = true_labels)
+  premade_omap<- dir(curr_map_sc, ".Rdata", full.names = TRUE)
+
+  if(length(premade_omap) == 0){
+      write("Creating map data", "")
+      mapname     <- dir(curr_map_sc,".png$") 
+      omap        <- png_map_reader(mapfile = paste0(curr_map_sc, mapname), 
+                                    true_categories = true_labels)
+  } else {
+    write(paste0("Loading map data from", premade_omap),"")
+    load(premade_omap[1])
+  }
   omap_grid   <- map_grid_maker(omap, seg_size = seg_size)
   
   # To allow for running test mode with fewer segments, try and cast runmode as integer

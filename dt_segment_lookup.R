@@ -107,30 +107,37 @@ dt_lookup_factory <- function(map_grid, by, source_data, source_var,
 }
 
 dt_fuzzy_join_factory <- function(limits, by, source_data, source_var, 
-                          target_data, target_var, target_tol, fun, cl){
+                                  target_data, target_var, target_tol, fun, cl){
   function(seg_no){
+    #browser()
     seg_limits <- unlist(limits[rownum == seg_no, ])
     looked_up <- as.matrix(source_data[X>=seg_limits["xmin"] &
                                          X<=seg_limits["xmax"] &
                                          Y>=seg_limits["ymin"] &
                                          Y<=seg_limits["ymax"],
                                        c(by, source_var), with = FALSE])
-    for(t_id in seq_along(target_data)){
-      init_time <- Sys.time()
-      seg_target <- target_data[[t_id]][X>=seg_limits["xmin"]-target_tol[[t_id]] &
-                                          X<=seg_limits["xmax"]+target_tol[[t_id]] &
-                                          Y>=seg_limits["ymin"]-target_tol[[t_id]] &
-                                          Y<=seg_limits["ymax"]+target_tol[[t_id]],
-                                        c(by, target_var[[t_id]]), with = FALSE]
-      #write(paste(t_id, "target subset"), stdout())
-      seg_lookup <- seg_lookup_factory(looked_up, seg_target, target_tol[[t_id]], .dt_closest)
-      
-      # Make cluster to speed up searching for values
-      looked_up <-t(parSapply(X = seq.int(1, nrow(looked_up)), FUN = seg_lookup, cl = cl))
-      #write(paste("target", t_id, "joined in", round(difftime(Sys.time(), init_time, units = "secs"),0),"s."), stdout())
+    if(nrow(looked_up) == 0){
+      return(data.table(matrix(nrow=0, 
+                               ncol = length(c(by, source_var,  unlist(target_var))), 
+                               dimnames =list(NULL, c(by, source_var, unlist(target_var))))))
+    } else {
+      for(t_id in seq_along(target_data)){
+        init_time <- Sys.time()
+        seg_target <- target_data[[t_id]][X>=seg_limits["xmin"]-target_tol[[t_id]] &
+                                            X<=seg_limits["xmax"]+target_tol[[t_id]] &
+                                            Y>=seg_limits["ymin"]-target_tol[[t_id]] &
+                                            Y<=seg_limits["ymax"]+target_tol[[t_id]],
+                                          c(by, target_var[[t_id]]), with = FALSE]
+        #write(paste(t_id, "target subset"), stdout())
+        seg_lookup <- seg_lookup_factory(looked_up, seg_target, target_tol[[t_id]], .dt_closest)
+        
+        # Make cluster to speed up searching for values
+        looked_up <-t(parSapply(X = seq.int(1, nrow(looked_up)), FUN = seg_lookup, cl = cl))
+        #write(paste("target", t_id, "joined in", round(difftime(Sys.time(), init_time, units = "secs"),0),"s."), stdout())
+      }
+      #looked_up_dt <- as.data.table(looked_up)
+      #setnames(looked_up_dt, c(by, source_var, unlist(target_var)))
+      return(as.data.table(looked_up))
     }
-    #looked_up_dt <- as.data.table(looked_up)
-    #setnames(looked_up_dt, c(by, source_var, unlist(target_var)))
-    as.data.table(looked_up)
   }
 }
