@@ -58,9 +58,9 @@ png_map_reader <- function(mapfile, true_categories){
   map_dt[, c("X", "Y") := map_xy][, colour := rgb(map_dt[,.(R,G,B)])]
   map_dt[, c("cat_colour") := true_categories[catcl, .(colour)]]
   map_dt[, c("category") := true_categories[catcl, .(ID)]]
+  map_dt[, catcl := NULL][, cats := NULL]
   setcolorder(map_dt, c("X", "Y", "category", "R", "G", "B", "colour", "cat_colour", "pX", "pY"))
   setkey(map_dt, X, Y)
-  map_dt_plot(map_dt, colour = "cat_colour")
   return(map_dt)
 }
 
