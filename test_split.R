@@ -8,13 +8,13 @@ source("little_helpers.R")
 
 option_list <- list( 
   make_option(c("-s", "--source"), type = "character", 
-              default="~/master_thesis_code/area_output/", 
+              default="~/master_thesis_code/area_output2/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "source"),
-  make_option(c("-t", "--test"), type = "double", default = 0.2,
+  make_option(c("-t", "--test"), type = "double", default = 0.15,
               help = "Proportion of segments moved to test set  [default %default]",
               dest = "test_prob"),
-  make_option(c("-v", "--valid"), type = "double", default = 0.2,
+  make_option(c("-v", "--valid"), type = "double", default = 0.15,
               help = "Proportion of segments moved to validation set [default %default]",
               dest = "valid_prob"),
   make_option(c("-e", "--seed"), type = "integer", default = 831117,
@@ -78,4 +78,4 @@ write.csv(split_stats, paste0("test_split_stats_t",round(opts$test_prob*100),"v"
                               round(opts$valid_prob*100), "s", opts$seed,".csv"),
           row.names = FALSE)
 
-split_stats_plot(stats_split)
+split_stats_plot(split_stats)

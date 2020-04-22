@@ -22,10 +22,10 @@ point_dist_plot <- function(data, column,true_labels, save_formats = c("png", "p
              x = "Terrain")
     
     # Save specified file formats
-    lapply(save_formats, function(format){
+    invisible(lapply(save_formats, function(format){
         ggsave(paste0("point_category_distribution.", format), 
                height = 9, width = 20, units = "cm")
-    })
+    }))
 }
 
 #data = area_stats_dt[area_names, nomatch=0, on = c("area_name == area_id"), ][,area_name:=NULL]
@@ -34,7 +34,7 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
     suppressPackageStartupMessages(require(ggplot2))
     label_vec   <- setNames(true_labels$colour, true_labels$category)
     #data <- area_stats[area != "total"]
-    data <- melt(data, id.vars = "area" )[variable %in% names(label_vec),]
+    data <- melt(data[, c(names(label_vec),"area")], id.vars = "area" )
     nudgey <- max(data$value) / 20
     # Set theme outside fo clarity
     theme_set(theme_bw(base_family = "serif", base_size = 11) +
@@ -51,7 +51,7 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
                         strip.background = element_rect(fill = "transparent",colour = "transparent")
                   ))
     
-    ggplot(data, aes(x = variable, y = value, fill = variable)) + 
+    map_plot <- ggplot(data, aes(x = variable, y = value, fill = variable)) + 
         geom_col(col = "black", width = 0.5) +
         geom_text(aes(label = round(value,2)), nudge_y = nudgey, size = 2.5, family = "serif") +
         scale_fill_manual("", values = label_vec) +
@@ -61,11 +61,13 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
              x = "", subtitle = subtitle) +
         facet_wrap(.~area, ncol = 3)
     
+    if(!is.null(save_formats)){
             # Save specified file formats
     lapply(save_formats, function(format){
-        invisible(ggsave(paste0(addname ,"_pixel_dist.", format), 
+        invisible(ggsave(filename = paste0(addname ,"_pixel_dist.", format), 
+                         plot = map_plot,
                          height = 11*0.3, width = 8.5, units = "in"))
-    })
+    })} else { print(map_plot) }
 }
 
 
@@ -96,7 +98,7 @@ map_dt_plot <- function(map, x = "pX", y = "pY", colour = "colour", dirname = ""
     png::writePNG(image = map_array, target = paste0(dirname, "_", colour, "_map.png"), dpi = 150)
 }
 
-confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL){
+confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL, conf_mat = NULL){
     # Helper to print the conf-matrix outout of eval in a slightly prettier way
     # Requires the following in the LATEX preamble
     # \usepackage{booktabs}
@@ -110,19 +112,20 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
     # {\begin{table}[ht] \begin{adjustwidth}{-1in}{-1in} }
     # {\end{adjustwidth} \end{table}}
     # 
-    if(is.null(cm_path)){
+  if(is.null(conf_mat)){
+        if(is.null(cm_path)){
         cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".",test_area,"]/best.conf_mat.npy")
+        suppressPackageStartupMessages(library(RcppCNPy))
+        conf_mat     <- npyLoad(cm_path)
     } 
+  }
+
     if(is.null(model)){ model <- "unknown" }
     if(is.null(test_area)){ test_area <- "unknown" }
     
-
-    suppressPackageStartupMessages(library(RcppCNPy))
     suppressPackageStartupMessages(library(xtable))
     source("true_colour_codes.R")
-    
     true_labels <- create_true_labels()$category
-    conf_mat     <- npyLoad(cm_path)
     
     rsums        <- rowSums(conf_mat)
     csums        <- colSums(conf_mat)
@@ -142,8 +145,8 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
     }
     dimnames(char_mat) <- list(rlabs, clabs)
     shortcaption <- paste("Confusion matrix for", model, "evaluated on", test_area)
-    longcaption  <- paste("\\centering ", shortcaption,".\nAccuracy:", totalacc, ", IoU:", round(mean(classiou),2))
-    cm_label     <- paste0("tab:res_",model, "_", test_area)
+    longcaption  <- paste("\\centering ", shortcaption,".\\newline Overall accuracy:", totalacc, ", average accuacy:", round(mean(classacc),2), ", IoU:", round(mean(classiou),2))
+    cm_label     <- gsub(" ","_",paste0("tab:res_", model, "_", test_area))
     
     print.xtable(xtable(char_mat, digits = 0, 
                         caption = c(longcaption, shortcaption), 
@@ -210,3 +213,4 @@ filtered_mean <- function(x, thresh){
   mean(x[x<=thresh])
 }
 
+classiou <- function(conf_mat){}

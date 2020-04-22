@@ -3,8 +3,8 @@ import numpy as np
 from shutil import copyfile
 
 area_id = "16"
-h5_path = "../pvcnn/data/terrain/h5_output"
-label_path = "../area_output"
+h5_path = "../pvcnn/data/terrain/h5_2"
+label_path = "../area_output2"
 
 h5_folder = os.path.join(h5_path, "Area_" + area_id)
 label_folder = os.path.join(label_path, "Area_" + area_id)
