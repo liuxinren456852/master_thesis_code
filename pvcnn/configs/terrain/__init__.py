@@ -11,7 +11,7 @@ configs.data.num_classes = 8
 
 # dataset configs
 configs.dataset = Config(TERRAIN)
-configs.dataset.root = 'data/terrain/h5_output'
+configs.dataset.root = 'data/terrain/h5_2'
 configs.dataset.with_normalized_coords = True
 # configs.dataset.num_points = 2048
 # configs.dataset.holdout_area = 5
@@ -19,7 +19,7 @@ configs.dataset.with_normalized_coords = True
 # evaluate configs
 configs.evaluate = Config()
 configs.evaluate.fn = evaluate
-configs.evaluate.num_votes = 10
+configs.evaluate.num_votes = 4
 # configs.evaluate.batch_size = 16 # moved to the models instead
 configs.evaluate.dataset = Config(split='test')
 

@@ -118,6 +118,7 @@ def main():
     import torch.backends.cudnn as cudnn
     from torch.utils.data import DataLoader
     from tqdm import tqdm
+    from torchsummary import summary
 
     ################################
     # Train / Eval Kernel Function #
@@ -211,8 +212,12 @@ def main():
     if configs.device == 'cuda':
         model = torch.nn.DataParallel(model)
     model = model.to(configs.device)
+    if configs.train.weight_type == 2:
+        weight_file = 'alt_category_weights.npy'
+    else:
+        weight_file = 'orig_category_weights.npy'
     criterion = configs.train.criterion()
-    criterion.weight = torch.FloatTensor(np.load('category_weights.npy'))
+    criterion.weight = torch.FloatTensor(np.load(weight_file))
     criterion = criterion.to(configs.device)
     optimizer = configs.train.optimizer(model.parameters())
 
@@ -238,11 +243,11 @@ def main():
     else:
         scheduler = None
     
-    # print("\n==>Model:")
-    # print(model)
-    # print("End model definition\n")
+    print("\n==>Model:")
+    print(model)
+    print("End model definition\n")
     
-    hl.build_graph(model, torch.zeros([1, 3, 224, 224]))
+    #hl.build_graph(model, torch.zeros([1, 3, 224, 224]))
 
     ############
     # Training #

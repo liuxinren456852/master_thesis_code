@@ -159,7 +159,7 @@ def evaluate(configs=None):
                 # repeat, shuffle and tile
                 # TODO: speedup here
                 batched_inputs = np.zeros((batch_size, total_num_voted_points, num_channels), dtype=np.float32)
-                print(batched_inputs.shape)
+                #print(batched_inputs.shape)
                 batched_shuffled_point_indices = np.zeros((batch_size, total_num_voted_points), dtype=np.int64)
                 for relative_window_index in range(batch_size):
                     num_points_in_window = scene_num_points[relative_window_index + min_window_index]
@@ -174,7 +174,7 @@ def evaluate(configs=None):
                 inputs = torch.from_numpy(
                     batched_inputs.reshape((batch_size * extra_batch_size, dataset.num_points, -1)).transpose(0, 2, 1)
                 ).float().to(configs.device)
-                print(inputs.shape)
+                #print(inputs.shape)
                 with torch.no_grad():
                     # cofidence och pred kommer från max(), inte softmax, och är värdet samt index för maxvärdet i softmax.
                     batched_probs = F.softmax(model(inputs), dim=1)

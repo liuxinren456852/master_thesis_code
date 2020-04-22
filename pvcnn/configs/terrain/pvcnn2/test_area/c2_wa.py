@@ -1,7 +1,7 @@
 from utils.config import configs
 
 configs.model.width_multiplier = 2
-configs.train.weight_type = 1
+configs.train.weight_type = 2
 
 configs.train.batch_size = 16
 configs.evaluate.batch_size = 6
