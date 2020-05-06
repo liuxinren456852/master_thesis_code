@@ -130,6 +130,7 @@ def predict(configs=None):
     ##############
 
     total_num_scenes = len(dataset.scene_list)
+    prefix = "c" + str(configs.model.width_multiplier).replace(".","p")
     #stats = np.zeros((3, configs.data.num_classes, total_num_scenes))
     #conf_mat = np.zeros((configs.data.num_classes, configs.data.num_classes))
 
@@ -192,8 +193,8 @@ def predict(configs=None):
         # update_stats(stats, ground_truth, predictions, scene_index, total_num_points_in_scene)
         # update_conf_mat(conf_mat, ground_truth, predictions, total_num_points_in_scene)
 
-        np.save(os.path.join(scene, 'preds.npy'), predictions.astype(float))
-        np.save(os.path.join(scene, 'entropy.npy'), entropies.astype(float))
+        np.save(os.path.join(scene, prefix + 'preds.npy'), predictions.astype(float))
+        np.save(os.path.join(scene, prefix + 'entropy.npy'), entropies.astype(float))
 
 
     # np.save(configs.evaluate.stats_path, stats)

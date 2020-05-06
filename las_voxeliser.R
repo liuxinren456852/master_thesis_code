@@ -120,6 +120,7 @@ mlr_valid[,`:=` (ents = apply(valid_prob, 1, function(x) sum(x*log(x))),
 
 save(mlr_train, mlr_valid, mlr, opts, file = "mlr_data.Rdata")
 
+
 valid_m <- caret::confusionMatrix(mlr_valid[ents < opts$entropy_limit, pred], 
                                   mlr_valid[ents < opts$entropy_limit ,category])$table
 confusion_matrix_xtable("multinomial regression","validation samples",conf_mat = valid_m)

@@ -115,10 +115,11 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
   if(is.null(conf_mat)){
         if(is.null(cm_path)){
         cm_path <- paste0("pvcnn/runs/[configs+terrain.",model,".",test_area,"]/best.conf_mat.npy")
-        suppressPackageStartupMessages(library(RcppCNPy))
-        conf_mat     <- npyLoad(cm_path)
-    } 
+        } 
+    suppressPackageStartupMessages(library(RcppCNPy))
+    conf_mat     <- npyLoad(cm_path)
   }
+
 
     if(is.null(model)){ model <- "unknown" }
     if(is.null(test_area)){ test_area <- "unknown" }
@@ -130,13 +131,13 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
     rsums        <- rowSums(conf_mat)
     csums        <- colSums(conf_mat)
     truepos      <- diag(conf_mat)
-    classacc     <- round(truepos / csums,2)
+    classacc     <- round(truepos / csums,5)
     totalacc     <- round(sum(truepos)/sum(conf_mat),2)
-    classiou     <- round(truepos / (rsums + csums - truepos),2)
+    classiou     <- round(truepos / (rsums + csums - truepos),5)
     rlabs        <- c(true_labels, "Total", "Accuracy", "IoU")
     clabs        <- c(true_labels)
     
-    char_mat     <- rbind(conf_mat, as.character(csums), as.character(classacc), as.character(classiou))
+    char_mat     <- rbind(conf_mat, as.character(csums), as.character(round(classacc,2)), as.character(round(classiou,2)))
 
     for(col in seq(1,length(true_labels))){
         char_mat[col,col] <- paste0("\\colorbox{truepositive}{", char_mat[col,col], "}")
@@ -145,8 +146,9 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
     }
     dimnames(char_mat) <- list(rlabs, clabs)
     shortcaption <- paste("Confusion matrix for", model, "evaluated on", test_area)
-    longcaption  <- paste("\\centering ", shortcaption,".\\newline Overall accuracy:", totalacc, ", average accuacy:", round(mean(classacc),2), ", IoU:", round(mean(classiou),2))
-    cm_label     <- gsub(" ","_",paste0("tab:res_", model, "_", test_area))
+    longcaption  <- paste("\\centering ", shortcaption,".\\newline Overall accuracy:", totalacc, ", average accuacy:", 
+                          round(mean(classacc),2), ", IoU:", round(mean(classiou),2))
+    cm_label     <- gsub("[ =\\,\\.]","",paste0("tab:res_", model, "_", test_area))
     
     print.xtable(xtable(char_mat, digits = 0, 
                         caption = c(longcaption, shortcaption), 
@@ -157,6 +159,8 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
                  floating.environment = "widetable",
                  table.placement = NULL,
                  caption.placement = "top")
+    print(paste0(gsub("[ =\\,\\+\\.]","",model), "iou <- c(", paste0(classiou, collapse=","),");", 
+                 gsub("[ =\\,\\+\\.]","",model), "acc <- c(", paste0(classacc, collapse = ","),");"))
 }
 
 area_names <- data.table::data.table(area_id = paste0("Area_", 1:16), 
@@ -168,11 +172,11 @@ area_names <- data.table::data.table(area_id = paste0("Area_", 1:16),
 
 split_stats_plot <- function(split_stats){
     # Helper to plot the split into test/validation in test_split.R
-    split_stats <- data.table(split_stats)[area_names, on = "area_id"]
+    split_stats <- data.table(split_stats)[area_names, on = "area_id", nomatch=0]
     split_stats[, train := total -(tests + valid)][, area_id := NULL][, total := NULL]
     setcolorder(split_stats, c("area", "train", "tests", "valid"))
     split_stats <- melt(split_stats, id.vars = "area")
-    fills <- c(train = "mediumorchid4",tests ="mediumorchid3", valid ="orchid1")
+    fills <- setNames(viridisLite::viridis(3), c("train", "tests", "valid"))
     ggplot(split_stats, aes(x=area, y = value, fill = variable)) + 
         geom_col(position = position_dodge2(padding=.3), col = "grey20", width = .7) +
         scale_fill_manual("", values = fills) + 
