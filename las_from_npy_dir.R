@@ -4,7 +4,7 @@ suppressPackageStartupMessages(library(data.table))
 suppressPackageStartupMessages(library(RcppCNPy))
 
 option_list <- list( 
-  make_option(c("-n", "--npy_source"), type = "character", default="area_output2/", 
+  make_option(c("-n", "--npy_source"), type = "character", default="kvarn_output/",
               help="Directory where source numpy files are located as subfolders [default %default]",
               dest = "npy_source"),
   make_option(c("-l", "--las_output"), type = "character", default="las_output2/", 
@@ -34,7 +34,7 @@ areas      <- dir(opts$npy_source, full.names = TRUE)
 areas      <- areas[!(grepl(x = areas, pattern =  "\\."))]
 nareas     <- length(areas)
 
-area_id    <- 0
+area_id    <- 16
 area_stats <- vector("list", nareas)
 for(area in areas){
   area_name  <- sub(opts$npy_source, "", area)

@@ -87,6 +87,8 @@ for(area in areas){
       mapname     <- dir(curr_map_sc,".png$") 
       omap        <- png_map_reader(mapfile = paste0(curr_map_sc, mapname), 
                                     true_categories = true_labels)
+      save(omap, file = paste0(area, "_omap.Rdata"))
+      map_dt_plot(omap, colour = "cat_colour")
   } else {
     write(paste0("Loading map data from", premade_omap),"")
     load(premade_omap[1])

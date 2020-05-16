@@ -33,8 +33,8 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
     # Little helper to plot the distribution of terrain points from omap totals
     suppressPackageStartupMessages(require(ggplot2))
     label_vec   <- setNames(true_labels$colour, true_labels$category)
-    #data <- area_stats[area != "total"]
-    data <- melt(data[, c(names(label_vec),"area")], id.vars = "area" )
+    data <- data[area != "total",c(names(label_vec),"area"), with = FALSE]
+    data <- melt(data, id.vars = "area" )
     nudgey <- max(data$value) / 20
     # Set theme outside fo clarity
     theme_set(theme_bw(base_family = "serif", base_size = 11) +
@@ -50,15 +50,15 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
                         strip.placement = "outside",
                         strip.background = element_rect(fill = "transparent",colour = "transparent")
                   ))
-    
+    data[,value:=as.numeric(value)]
     map_plot <- ggplot(data, aes(x = variable, y = value, fill = variable)) + 
         geom_col(col = "black", width = 0.5) +
         geom_text(aes(label = round(value,2)), nudge_y = nudgey, size = 2.5, family = "serif") +
         scale_fill_manual("", values = label_vec) +
-        scale_y_continuous("Proportion",expand = c(0,0), limits = c(0,0.7)) +
+        #scale_y_continuous("Proportion",expand = c(0,0), limits = c(0,0.7)) +
         scale_x_discrete(limits = names(label_vec)) + 
-        labs(title = "Distribution of terrain types per split",
-             x = "", subtitle = subtitle) +
+        labs(title = "Distribution of terrain types per area",
+             x = "", subtitle = subtitle, y ="") +
         facet_wrap(.~area, ncol = 3)
     
     if(!is.null(save_formats)){
@@ -66,7 +66,7 @@ map_dist_plot <- function(data,  true_labels, addname = "", subtitle ="", save_f
     lapply(save_formats, function(format){
         invisible(ggsave(filename = paste0(addname ,"_pixel_dist.", format), 
                          plot = map_plot,
-                         height = 11*0.3, width = 8.5, units = "in"))
+                         height = 11.5, width = 8.5, units = "in"))
     })} else { print(map_plot) }
 }
 
@@ -163,12 +163,12 @@ confusion_matrix_xtable <- function(model = NULL, test_area = NULL, cm_path=NULL
                  gsub("[ =\\,\\+\\.]","",model), "acc <- c(", paste0(classacc, collapse = ","),");"))
 }
 
-area_names <- data.table::data.table(area_id = paste0("Area_", 1:16), 
+area_names <- data.table::data.table(area_id = paste0("Area_", 1:17), 
                          area = c("akerbo_nv","akerbo_o","akerbo_sv","grytstorp_nv",
                                   "grytstorp_v","linkoping_s","linkoping_sv",
                                   "linkoping_vidingsjo","prasttomta_nv","prasttomta_v",
                                   "sodero_mitt","sodero_nv","sodero_sv","valla",
-                                  "test_set", "validation_set"))
+                                  "test_set", "validation_set", "kvarn"))
 
 split_stats_plot <- function(split_stats){
     # Helper to plot the split into test/validation in test_split.R
@@ -176,7 +176,8 @@ split_stats_plot <- function(split_stats){
     split_stats[, train := total -(tests + valid)][, area_id := NULL][, total := NULL]
     setcolorder(split_stats, c("area", "train", "tests", "valid"))
     split_stats <- melt(split_stats, id.vars = "area")
-    fills <- setNames(viridisLite::viridis(3), c("train", "tests", "valid"))
+    split_stats[, variable := factor(variable, levels = c("train", "valid", "tests"))]
+    fills <- setNames(viridisLite::viridis(3), c("train", "valid", "tests"))
     ggplot(split_stats, aes(x=area, y = value, fill = variable)) + 
         geom_col(position = position_dodge2(padding=.3), col = "grey20", width = .7) +
         scale_fill_manual("", values = fills) + 
@@ -205,6 +206,12 @@ dt_mode <- function(x, w = NULL){
         # Avg weight by category, sort and return first/lowest
         data.table(x=x, w=w)[, mean(w), by = x][order(V1)][1,x]
     }
+}
+
+weighed_mode <- function(x, w){
+  # Avg weight by category, sort and return first/lowest
+  top_class <- data.table(x=x, w=w)[, mean(w), by = x][order(V1)][1,x]
+  if(length(top_class)==0){ return(NA) } else { return(top_class) }
 }
 
 filtered_mode <- function(x, w, thresh){
