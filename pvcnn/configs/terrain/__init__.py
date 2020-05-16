@@ -19,21 +19,21 @@ configs.dataset.with_normalized_coords = True
 # evaluate configs
 configs.evaluate = Config()
 configs.evaluate.fn = evaluate
-configs.evaluate.num_votes = 4
+configs.evaluate.num_votes = 6
 # configs.evaluate.batch_size = 16 # moved to the models instead
 configs.evaluate.dataset = Config(split='test')
 
 # predict configs
 configs.predict = Config()
 configs.predict.fn = predict
-configs.predict.root = 'data/terrain/predict'
-configs.predict.num_votes = 1
+configs.predict.root = 'data/terrain/h5_nosplit'
+configs.predict.num_votes = 5
 configs.predict.dataset = Config(split='test')
-configs.predict.batch_size = 1
+configs.predict.batch_size = 4
 
 # train configs
 configs.train = Config()
-configs.train.num_epochs = 4
+configs.train.num_epochs = 71
 # configs.train.batch_size = 16 moved to the models instead
 
 # train: meters

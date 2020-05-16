@@ -6,4 +6,4 @@ configs.train.weight_type = 1
 configs.train.batch_size = 16
 configs.evaluate.batch_size = 6
 
-configs.dataset.num_points = 4096
+configs.dataset.num_points = 2048

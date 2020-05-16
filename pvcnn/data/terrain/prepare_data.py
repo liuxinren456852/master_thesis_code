@@ -331,7 +331,9 @@ def main():
                         idx = idx + 1
 
             # Marker indicating we've processed this dataset
-            open(dataset_marker, 'w').close()
+            datamarker = open(dataset_marker, 'w')
+            datamarker.write(str(xyzrgb.shape[0]))
+            datamarker.close()
     print(f'{datetime.now()}-Done.')
 
 
