@@ -1,0 +1,80 @@
+---
+title: "Framkomlighetsrapport - dokumentation"
+author: "Gustav Lundberg"
+date: '2020-06-05'
+output: pdf_document
+---
+## Antaganden och pre-reqs
+
+Denna dokumentation utgår från att Linux körs och alla sökvägar är relativt den som dokumentationen finns i. Det hela \textit{borde} fungera på Windows också men det har inte testats.
+
+Databehandling sker i allmänhet i R (ver > 3.2) och följande R-kod installerar alla paket som behöver vara installerade:
+
+```{r eval=FALSE}
+install.packages(c("data.table", "lidR", "ggplot2", "pdist", "RcppCNPy", "xtable",
+                   "optparse", "stringr", "patchwork", "parallel", "png"))
+```
+
+De kan med fördel också installeras i en egen Anaconda-miljö och installeras via Anaconda som då tar hand om alla beroenden. Alla scripten har skrivits i RStudio Server 1.2, men de ska gå att köra utan RStudio installerat.
+
+För att köra PVCNN++ krävs följande paket (från projektets [Github](https://github.com/mit-han-lab/pvcnn)):
+\begin{itemize}
+  \item Python >= 3.7
+  \item \href{https://github.com/pytorch/pytorch}{PyTorch} >= 1.3
+  \item \href{https://github.com/numba/numba}{numba}
+  \item \href{https://github.com/numpy/numpy}{numpy}
+  \item \href{https://github.com/scipy/scipy}{scipy}
+  \item \href{https://github.com/benjaminp/six}{six}
+  \item \href{https://github.com/lanpa/tensorboardX}{tensorboardX} >= 1.2
+  \item \href{https://github.com/tqdm/tqdm}{tqdm}
+  \item \href{https://github.com/dranjan/python-plyfile}{plyfile}
+  \item \href{https://github.com/h5py/h5py}{h5py}
+\end{itemize}
+Utöver dessa rekommenderas CUDA >= 10.2 för att kunna köra modellerna på GPU. Detta antas i resten av dokumentationen och det har inte testats att köra utan detta argument (`--devices 0,1`)
+
+\newpage
+## Datakällor
+
+### Orienteringskartor
+
+Dessa finns i fyra "nivåer":
+
+\paragraph{Råa orienteringskartor}
+Lagras  i `/ocd_kartor` dels som `.ocd` som är de kartor som Marcus Henriksson gav och dels som `.omap` som är de förenklade kartorna från vilka png-filerna exporteras. Kräver \href{https://www.openorienteering.org/apps/mapper/}{OpenOrienteeringMapper} (OOM) för att hantera.
+
+\paragraph{.png exporter}
+Finns i `/kartor` och är de oredigerade exporterna från OOM samt tillhörande world-fil (`.pgw`) med koordinater.
+
+\paragraph{Korrigerade kartor}
+Lagras i `/omap_corrected` och är kartorna som de ser ut efter första körningen i `.png_map_reader()`, dvs när alla pixlar är en av de åtta tillåtna.
+
+\paragraph{Rensade kartor}
+Lagras i `/omap_cleaned` och är kartorna efter att de rensats från enstaka pixlar med "fel" kategori. Här lagras också en `.Rdata`-fil med kartan som en data.table, det format som används i alla script. 
+
+Ska man göra en ny karta kommer denna inte att finnas ibland de korrigerade utan endast som rensad. world-filen behövs även om det finns en `.Rdata`-fil. Kartan ska döpas som [Område]_[väderstreck] där område generellt är vilken orienteringskarta den kommer från då de första fem bokstäverna i områdesnamnet används för att söka upp vilka laserdata och ytmodelldata som ska användas.
+
+### Laserdata
+
+Lagras i `../laslager/[område]/laserdata` som `.las` eller `.laz`-filer. Kan ligga var som helst, men slutnivåerna `/[område]/laserdata` är hårdkodad på de flesta ställen medan resten av sökvägen kan ges som argument. Dessa bör täcka de områden som orienteringskartorna för samma område, men inte onödigt mycket mer så inläsningen isåfall tar lång tid. Data som använts har hämtats via \href{https://zeus.slu.se/get/?drop=}{SLU} men levereras ursprungligen av Lantmäteriet. 
+
+### Ytmodell
+
+Finns i `../laslager/[område]/ytmodell` och samma villkor gäller för dessa som för laserdata. 
+
+### Andra data
+
+Skulle man vilja lägga till ytterligare datakällor till modellen behöver man se till att dessa läses in i `las_data_prep.R` som en data.table med variablerna X, och Y samt de data som man vill joina med. Man behöver också ändra antalet variabler i `pvcnn/configs/terrain/[modell]/__init__.py` på raden `configs.model.extra_feature_channels` så att det är antalet variabler man joinar in +3 (för normaliserade koordinater).
+
+## Databehandling
+
+Databehandlingen illustreras i figur 2.8 i rapporten, men kortfattat är stegen:
+
+\begin{itemize}
+  \item Skapa en png-karta med tillhörande pgw-fil
+  \item Ladda ner motsvarande laserdata och ytmodell
+  \item Kör `las\_data\_prep.R` för att sammanfoga data
+  \item Kör `pvcnn/data/terrain/prepare\_data.py` för att skapa h5-filer
+  \item[$\ast$] Kopiera in xyzrgb-filerna till h5-katalogen med `pvcnn/utils/xyzrgbcopy.py` för prediktioner
+  \item[$\ast$] Kopiera in label-filerna till h5-katalogen med `pvcnn/utils/labelbcopy.py` för utvärdering
+\end{itemize}
+

@@ -7,7 +7,7 @@ for(width in opts$width){
   for(ent_lim in  opts$entropy_limit){
     entropy_limit <- ent_lim
     ent_pfx<-paste0("el",gsub("\\.","p",entropy_limit))
-    load(paste0(opts$pred_dir, prefix,"_",ent_pfx,"_grid_eval_stats.RData"))
+    load(paste0(save_dir, prefix,"_",ent_pfx,"_grid_eval_stats.RData"))
     conf_mat_total <- Reduce(`+`, conf_mats)
     unpredicted_dt <- rbindlist(unpredicted)[order(category), .(unknowns = sum(unpredicted)), by = "category"]
     unpredicted_dt[, `:=`(predicted = colSums(conf_mat_total), category = true_labels$category[category], correct = diag(conf_mat_total),
@@ -33,7 +33,7 @@ xtable(all_stats[, c(1,2,5,3,4,6,7)], digits = c(0,0,1,rep(3,5)))
 ###### Logistic regression ######
 width <-0.5;  prefix <- paste0("c", gsub("\\.","p",width)); 
 ent_lim <- 1.2; ent_pfx <- paste0("el",gsub("\\.","p",ent_lim));
-load(paste0(opts$pred_dir, prefix,"_",ent_pfx,"_grid_eval_stats.RData"))
+load(paste0(save_dir, prefix,"_",ent_pfx,"_grid_eval_stats.RData"))
 
 full_eval <- rbindlist(eval_list)[, dens := exp(log_dens)][, std_dens := (dens-mean(dens, na.rm =TRUE))/sd(dens, na.rm =TRUE), by = category][, hdp :="Low"]
 setkey(full_eval, Xpix, Ypix)
@@ -53,7 +53,7 @@ broom::tidy(anova(eval_glm, test="Chisq"))
 aaa <- full_eval[, .(correct = mean(pred_cat == category, na.rm=TRUE), count =.N), by=.(hdp, category)]
 ggplot(aaa, aes(x=category, y=correct,group=hdp, fill = hdp, label = count, col=hdp)) +
   geom_col(position = position_dodge(.9),col="grey30", width = .8)+
-  geom_text(aes(y = 0.07), position = position_dodge(.9), fontface ="bold",
+  geom_text(aes(y = 0.03), position = position_dodge(.9), fontface ="bold",
             family ="serif", size = 2.85, show.legend=FALSE ) +
   theme_minimal(base_family="serif") +
   scale_x_discrete(labels=true_labels$category) +
@@ -62,7 +62,7 @@ ggplot(aaa, aes(x=category, y=correct,group=hdp, fill = hdp, label = count, col=
   scale_colour_viridis_d(begin = 1/6, "Point density",direction = -1)+
   labs(x="", y="",title = "Proportion of correctly predicted grid units by density and category",
        subtitle = paste0("c = ", width, ", entropy limit = ", ent_lim)) +
-  theme(panel.grid.major.x = element_blank(), legend.position = "bottom")
+  theme(panel.grid.major.x = element_blank(), legend.position = "bottom", plot.background = element_rect(fill="transparent"))
 ggsave(paste0(prefix,"_",ent_pfx,"_correct_grid_prop.pdf"), width = 22, height = 9.5, units = "cm")
 
 # 

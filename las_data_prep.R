@@ -132,28 +132,7 @@ for(area in areas){
     # Process laslookup in sfm
     init_time_1 <- Sys.time()
     cl         <- parallel::makeForkCluster(min(floor(parallel::detectCores())-1, num_cores))
-# 
-#     las_sfm_lookup <- dt_lookup_factory(map_grid = omap_grid, 
-#                                         by = c("X", "Y"),
-#                                         source_data = las@data,
-#                                         source_var = c("Z","Intensity"),
-#                                         target_data = sfm@data, 
-#                                         target_var = c("R", "G", "B"), 
-#                                         target_tol = sfm_tol, fun = .dt_closest, cl = cl)
-# 
-#     las_omap_lookup <- dt_lookup_factory(map_grid = omap_grid,
-#                                          by = c("X", "Y"),
-#                                          source_data = las_sfm_join,
-#                                          source_var = c("Z", "Intensity", "R", "G", "B"),
-#                                          target_data = omap,
-#                                          target_var = c("category"),
-#                                          target_tol = 5, fun = .dt_closest, cl = cl)
-# 
-   
-# 
-#     las_sfm_join <- parLapply(X = curr_grp, fun = las_sfm_lookup, cl = cl)
-#     las_omap_join <- parLapply(X = curr_grp, fun = las_omap_lookup, cl = cl)
-    
+
     las_fuzzy_join <- dt_fuzzy_join_factory(omap_grid, 
                                             by = c("X", "Y"),
                                             source_data = las@data,

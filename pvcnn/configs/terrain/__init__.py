@@ -26,7 +26,7 @@ configs.evaluate.dataset = Config(split='test')
 # predict configs
 configs.predict = Config()
 configs.predict.fn = predict
-configs.predict.root = 'data/terrain/h5_nosplit'
+configs.predict.root = 'data/terrain/h5_2'
 configs.predict.num_votes = 5
 configs.predict.dataset = Config(split='test')
 configs.predict.batch_size = 4

@@ -8,13 +8,13 @@ option_list <- list(
   make_option(c("-m", "--omap_dir"), type="character", default="~/master_thesis_code/omap_cleaned/", 
               help="Directory where omaps are located in subfolders [default %default]",
               dest = "omap_dir"),
-  make_option(c("-w", "--width"), type = "double", default = 0.5,
+  make_option(c("-w", "--width"), type = "double", default = c(0.25,1),
               help = "Width multiplier whose predictions should be evaluated [default %default]",
               dest = "width"),
   make_option(c("-e", "--entropy_limit"), type = "double", default = c(0.8,1.0,1.2,1.4,1.6),
               help = "Maximum entropy for points to be considered in grid classification [default %default]",
               dest = "entropy_limit"),
-  make_option(c("-a", "--area"), type = "character", default = "Area_3",
+  make_option(c("-a", "--area"), type = "character", default = NULL,
               help = "Area for which to do predictions [default %default]",
               dest = "area")
 )
@@ -171,4 +171,4 @@ for(area in pred_areas){
             units = "in")
   }  
 }
-area_grouped[, `:=`(Xpix = Xpix/round_mult, Ypix = Ypix/round_mult)]
+#area_grouped[, `:=`(Xpix = Xpix/round_mult, Ypix = Ypix/round_mult)]

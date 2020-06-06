@@ -214,6 +214,8 @@ def main():
     model = model.to(configs.device)
     if configs.train.weight_type == 2:
         weight_file = 'alt_category_weights.npy'
+    elif configs.train.weight_type == 3:
+        weight_file = 'lrg_category_weights.npy'
     else:
         weight_file = 'orig_category_weights.npy'
     criterion = configs.train.criterion()
@@ -243,9 +245,9 @@ def main():
     else:
         scheduler = None
     
-    print("\n==>Model:")
-    print(model)
-    print("End model definition\n")
+    #print("\n==>Model:")
+    #print(model)
+    #print("End model definition\n")
     
     #hl.build_graph(model, torch.zeros([1, 3, 224, 224]))
 

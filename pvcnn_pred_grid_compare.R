@@ -2,7 +2,7 @@
 suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
-  make_option(c("-p", "--pred_dir"), type="character", default="~/master_thesis_code/pvcnn/data/terrain/h5_nosplit/", 
+  make_option(c("-p", "--pred_dir"), type="character", default="~/master_thesis_code/pvcnn/data/terrain/", 
               help="Directory where predictions are located in subfolders [default %default]",
               dest = "pred_dir"),
   make_option(c("-m", "--omap_dir"), type="character", default="~/master_thesis_code/omap_cleaned/", 
@@ -17,7 +17,7 @@ option_list <- list(
   make_option(c("-e", "--entropy_limit"), type = "double", default = c(0.8,1.0,1.2,1.4,1.6),
               help = "Maximum entropy for points to be considered in grid classification [default %default]",
               dest = "entropy_limit"),
-  make_option(c("-a", "--area"), type = "character", default = "Area_3",
+  make_option(c("-a", "--area"), type = "character", default = NULL,
               help = "Area for which to do predictions [default %default]",
               dest = "area")
 )
@@ -122,8 +122,8 @@ for(width in opts$width){
         # Load segment data, shift data by half seg_res to 
         seg_data     <- as.data.table(npyLoad(paste0(seg,"/xyzrgb.npy"))[,1:2])*round_mult 
         setnames(seg_data, c("X", "Y"))
-        seg_data[, c("prediction", "entropy") := .(factor(npyLoad(paste0(seg,"/",prefix,"preds.npy")), levels = true_labels$ID), 
-                                                   npyLoad(paste0(seg,"/",prefix,"entropy.npy")))]
+        seg_data[, c("prediction", "entropy") := .(factor(npyLoad(paste0(seg,"/",prefix,"_w2preds.npy")), levels = true_labels$ID), 
+                                                   npyLoad(paste0(seg,"/",prefix,"_w2entropy.npy")))]
         
         seg_data <- seg_data[X %between% c(seg_xmin,seg_xmax)  & Y %between% c(seg_ymin,seg_ymax), ]
         # Create grid columns 
@@ -194,7 +194,7 @@ for(width in opts$width){
       }
     }
     eval_data <- rbindlist(eval_list)
-    save(eval_data, opts, file = paste0(save_dir ,prefix,"_el",gsub("\\.","p",entropy_limit), "_grid_eval_stats.RData"))
-    #save(grid_counts, conf_mats, unpredicted, eval_list, opts, file = paste0(opts$pred_dir,prefix,"_el",gsub("\\.","p",entropy_limit), "_grid_eval_stats.RData"))
+    #save(eval_data, opts, file = paste0(save_dir ,prefix,"_el",gsub("\\.","p",entropy_limit), "_grid_eval_stats.RData"))
+    save(grid_counts, conf_mats, unpredicted, eval_list, opts, file = paste0(save_dir,prefix,"_el",gsub("\\.","p",entropy_limit), "_grid_eval_stats.RData"))
   }
 }
