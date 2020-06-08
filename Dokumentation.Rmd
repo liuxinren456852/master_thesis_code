@@ -10,10 +10,8 @@ Denna dokumentation utgår från att Linux körs och alla sökvägar är relativ
 
 Databehandling sker i allmänhet i R (ver > 3.2) och följande R-kod installerar alla paket som behöver vara installerade:
 
-```{r eval=FALSE}
-install.packages(c("data.table", "lidR", "ggplot2", "pdist", "RcppCNPy", "xtable",
-                   "optparse", "stringr", "patchwork", "parallel", "png"))
-```
+
+`install.packages(c("data.table", "lidR", "ggplot2", "pdist", "RcppCNPy", "xtable","optparse", "stringr", "patchwork", "parallel", "png"))`
 
 De kan med fördel också installeras i en egen Anaconda-miljö och installeras via Anaconda som då tar hand om alla beroenden. Alla scripten har skrivits i RStudio Server 1.2, men de ska gå att köra utan RStudio installerat.
 
@@ -65,16 +63,39 @@ Finns i `../laslager/[område]/ytmodell` och samma villkor gäller för dessa so
 
 Skulle man vilja lägga till ytterligare datakällor till modellen behöver man se till att dessa läses in i `las_data_prep.R` som en data.table med variablerna X, och Y samt de data som man vill joina med. Man behöver också ändra antalet variabler i `pvcnn/configs/terrain/[modell]/__init__.py` på raden `configs.model.extra_feature_channels` så att det är antalet variabler man joinar in +3 (för normaliserade koordinater).
 
-## Databehandling
+## Modellträning
 
 Databehandlingen illustreras i figur 2.8 i rapporten, men kortfattat är stegen:
 
-\begin{itemize}
-  \item Skapa en png-karta med tillhörande pgw-fil
+\begin{enumerate}
+  \item Exportera en png-karta med tillhörande pgw-fil från OOM
   \item Ladda ner motsvarande laserdata och ytmodell
-  \item Kör `las\_data\_prep.R` för att sammanfoga data
-  \item Kör `pvcnn/data/terrain/prepare\_data.py` för att skapa h5-filer
-  \item[$\ast$] Kopiera in xyzrgb-filerna till h5-katalogen med `pvcnn/utils/xyzrgbcopy.py` för prediktioner
-  \item[$\ast$] Kopiera in label-filerna till h5-katalogen med `pvcnn/utils/labelbcopy.py` för utvärdering
-\end{itemize}
+  \item Kör \verb|las_data_prep.R| för att sammanfoga data
+  \item Kör \verb|pvcnn/data/terrain/prepare_data.py| för att skapa h5-filer
+  \item Kör \verb|pvcnn/train.py| för att träna modellen.
+\end{enumerate}
 
+
+
+## Prediktioner
+
+För att bara skapa prediktioner för ett datamaterial:
+
+\begin{enumerate}
+  \item Exportera en png-karta med tillhörande pgw-fil från OOM ELLER
+  \item Skapa en .png-fil och .pgw-fil manuellt om orienteringskarta saknas. \footnote{Kan vara enfärgad, men antalet pixlar samt värdena i .pgw-filen avgör hur griddningen och därmed kartorna görs.}
+  \item Ladda ner motsvarande laserdata och ytmodell
+  \item Kör \verb|las_data_prep.R| för att sammanfoga data
+  \item Kör \verb|pvcnn/data/terrain/prepare_data.py| för att skapa h5-filer
+  \item Se till att 
+  \item Kopiera in xyzrgb-filerna till h5-katalogen med \verb|pvcnn/utils/xyzrgbcopy.py|
+\end{enumerate}
+
+## Modellutvärdering
+\begin{enumerate}
+  \item Exportera en png-karta med tillhörande pgw-fil från OOM
+  \item Ladda ner motsvarande laserdata och ytmodell
+  \item Kör \verb|las_data_prep.R| för att sammanfoga data
+  \item Kör \verb|pvcnn/data/terrain/prepare_data.py| för att skapa h5-filer
+  \item Kopiera in label-filerna till h5-katalogen med \verb|pvcnn/utils/labelbcopy.py| 
+\end{enumerate}
