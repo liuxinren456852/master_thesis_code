@@ -135,12 +135,12 @@ def predict(configs=None):
     #conf_mat = np.zeros((configs.data.num_classes, configs.data.num_classes))
 
     for scene_index, (scene, scene_files) in enumerate(tqdm(dataset.scene_list.items(), desc='Predicting', ncols=0)):
-        ground_truth = np.load(os.path.join(scene, 'label.npy')).reshape(-1)
-        total_num_points_in_scene = ground_truth.shape[0]
-        #datamarker = open(os.path.join(scene, '.dataset'),'r')
-        #total_num_points_in_scene = datamarker.read()
-        #datamarker.close()
-        #total_num_points_in_scene = int(total_num_points_in_scene)
+        #ground_truth = np.load(os.path.join(scene, 'label.npy')).reshape(-1)
+        #total_num_points_in_scene = ground_truth.shape[0]
+        datamarker = open(os.path.join(scene, '.dataset'),'r')
+        total_num_points_in_scene = datamarker.read()
+        datamarker.close()
+        total_num_points_in_scene = int(total_num_points_in_scene)
         #print(str(total_num_points_in_scene) + ' points in scene')
         confidences = np.zeros(total_num_points_in_scene, dtype=np.float32)
         predictions = np.full(total_num_points_in_scene, -1, dtype=np.int64)

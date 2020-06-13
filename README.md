@@ -92,13 +92,20 @@ För att utvärdera en modell:
 Prediktionsrutinen är i stort sett densamma som för utvärdering med undantag för att koordinatfilen måste kopieras in istället för label-filen. Notera att listan nedan inte är testad i sin helhet utan bara steg för steg.
 För att bara skapa prediktioner för ett datamaterial:
 
-  1. Exportera en png-karta med tillhörande pgw-fil från OOM ELLER
-  2. Skapa en .png-fil och .pgw-fil manuellt om orienteringskarta saknas. Kan vara enfärgad, men antalet pixlar samt värdena i .pgw-filen avgör hur griddningen och därmed kartorna görs.
-  3. Ladda ner motsvarande laserdata och ytmodell
-  4. Kör `las_data_prep.R` för att sammanfoga data
-  5. Kör `pvcnn/data/terrain/prepare_data.py` för att skapa h5-filer
-  6. Se till att rätt area-nummer sätts som test-area i `pvcnn/configs/terrain/[modell]/test_area/__init__.py`
-  7. Kopiera in xyzrgb-filerna till h5-katalogen med `pvcnn/utils/xyzrgbcopy.py`
-  8. Kör `pvcnn/train.py` med argumentet `--predict`.
+  1. Skapa en .pgw-fil med sex rader motsvarande upplösning X-led, skevning X-led, skevning Y-led, upplösning Y-led, startpunkt X-led, startpunkt Yled. T.ex.:  
+  `2.54`  
+  `0`  
+  `0`  
+  `-2.54`  
+  `516850`  
+  `6499635`.
+  Döp filen till minst fem tecken som motsvarar området, t.ex. `kvarn_test.pgw` och lägg i en katalog med samma namn.
+  2. Ladda ner motsvarande laserdata och ytmodell och lägg i en katalog med de första fem tecknen från pgw-filen. 
+  3. Kör `las_data_prep.R` för att sammanfoga data t.ex. `Rscript las_data_prep.R -m ~/master_thesis_code/kvarn_test/ -o ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -l /media/gustav/storage/laslager/ -p 600x300`. -p argumentet bestämmer hur många pixlar som ska finnas i dummy-data. multipliceras med rad 1 resp 4 i .pgw-filen för att få områdets dimensioner.
+  4. Kör `pvcnn/data/terrain/prepare_data.py` för att skapa h5-filer. Sätt argumenten `-f`, `-d` och `-o` till samma sökväg som `-o` i steg 3.
+  5. Se till att rätt area-nummer sätts som test-area i `pvcnn/configs/terrain/[modell]/test_area/__init__.py` samt rätt datakälla i `pvcnn/configs/terrain/__init__.py` (raden `configs.predict.root`). Ta bort `.area`-filen under varje Area-katalog.
+  6. Kör `pvcnn/train.py` med argumentet `--predict`.
+  7. Kör `pvcnn_full_area_pred.R` med new_area-argumentet saqtt till TRUE, t.ex. `Rscript pvcnn_full_area_pred.R -p ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -m ~/master_thesis_code/kvarn_test -w 0.5 -n TRUE`. Detta ger en ny mapp `eval` under katalogen med predictions där kartorna finns.
+
   
 

@@ -2,7 +2,6 @@ import argparse
 import os
 import random
 import shutil
-import hiddenlayer as hl
 
 
 def prepare():

@@ -16,7 +16,10 @@ option_list <- list(
               dest = "entropy_limit"),
   make_option(c("-a", "--area"), type = "character", default = NULL,
               help = "Area for which to do predictions [default %default]",
-              dest = "area")
+              dest = "area"),
+  make_option(c("-n", "--new_area"), type = "logical", default = FALSE,
+              help = "Is this a completely new area for which no ground truth exists [default %default]",
+              dest = "new_area")
 )
 
 opt_parser <- OptionParser(option_list=option_list);
@@ -47,29 +50,43 @@ setDTthreads(threads = 3)
 
 # Get all omap data into list for late comparison
 omaps <- dir(opts$omap_dir, full.names = TRUE)
+
 area_omaps <- vector("list", length = length(omaps))
 write("Loading omaps","")
 omap_pb <- txtProgressBar(0,length(area_omaps),width = 10,style = 3)
-for(oid in seq_along(omaps)){
-  premade_omap<- dir(omaps[oid], ".Rdata", full.names = TRUE)
-  
-  if(length(premade_omap) == 0){
-    mapname     = dir(omaps[oid],".png$", full.names = TRUE)
-    omap        = png_map_reader(mapfile = mapname, 
-                                 true_categories = true_labels)
-  } else {
-    load(premade_omap[1])
-    # multiplying and casting as int to get rid of rounding errors in join
-    omap[, X := as.integer(X*round_mult)][, Y := as.integer(Y*round_mult)][, category := factor(category, levels = true_labels$ID)]
-    setkey(omap, X, Y)
+if(!opts$new_area){
+  # Handle predictions for areas used in training
+
+  for(oid in seq_along(omaps)){
+    premade_omap <- dir(omaps[oid], ".Rdata", full.names = TRUE)
+    
+    if(length(premade_omap) == 0){
+      mapname     = dir(omaps[oid],".png$", full.names = TRUE)
+      omap        = png_map_reader(mapfile = mapname, 
+                                   true_categories = true_labels)
+    } else {
+      load(premade_omap[1])
+      # multiplying and casting as int to get rid of rounding errors in join
+      omap[, X := as.integer(X*round_mult)][, Y := as.integer(Y*round_mult)][, category := factor(category, levels = true_labels$ID)]
+      setkey(omap, X, Y)
+    }
+    
+    resolution  = as.numeric(readLines(dir(omaps[oid], "*.pgw", full.names = TRUE)))[1]*round_mult
+    area_omaps[[oid]] <- list(map = omap[, .(X,Y,category)], resolution = resolution)
+    setTxtProgressBar(omap_pb,oid)
   }
-
-  resolution  = as.numeric(readLines(dir(omaps[oid], "*.pgw", full.names = TRUE)))[1]*round_mult
-  area_omaps[[oid]] <- list(map = omap[, .(X,Y,category)], resolution = resolution)
-  setTxtProgressBar(omap_pb,oid)
+  close(omap_pb)
+} else {
+  for(oid in seq_along(omaps)){
+    premade_omap <- dir(omaps[oid], ".Rdata", full.names = TRUE)
+    load(premade_omap[1])
+    area_omaps[[oid]] <- pred_omap_data
+    area_omaps[[oid]]$map[, X := as.integer(X*round_mult)][, Y := as.integer(Y*round_mult)]
+    area_omaps[[oid]]$resolution <- area_omaps[[oid]]$resolution * round_mult
+    setTxtProgressBar(omap_pb,oid)
+  }
+  
 }
-close(omap_pb)
-
 if(is.null(opts$area)){
   pred_areas <- dir(opts$pred_dir, full.names = TRUE)
   pred_areas <- pred_areas[(grepl("Area\\_[0-9]{1,2}", pred_areas))]
@@ -106,9 +123,9 @@ for(area in pred_areas){
     for(seg in segs){
       seg_data  <- as.data.table(npyLoad(paste0(seg,"/xyzrgb.npy"))[,1:2])*round_mult 
       setnames(seg_data, c("X", "Y"))
-      seg_data[, c("prediction", "entropy") := .(factor(npyLoad(paste0(seg,"/",prefix,"preds.npy")), 
+      seg_data[, c("prediction", "entropy") := .(factor(npyLoad(paste0(seg,"/",prefix,"_w1preds.npy")), 
                                                         levels = true_labels$ID), 
-                                                 npyLoad(paste0(seg,"/",prefix,"entropy.npy")))]
+                                                 npyLoad(paste0(seg,"/",prefix,"_w1entropy.npy")))]
       raw_points[[seg]] <- seg_data
       seg_no    <- seg_no +1
       setTxtProgressBar(segm_pb, seg_no)

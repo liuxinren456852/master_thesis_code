@@ -19,7 +19,10 @@ option_list <- list(
               dest = "runmode"),
   make_option(c("-c", "--cores"), type = "integer", default = parallel::detectCores()-1,
               help = "Number of cores to use [default %default]",
-              dest = "num_cores")
+              dest = "num_cores"),
+  make_option(c("-p", "--pred_dim"), type = "character", default = NULL,
+              help = "Pixel equivalent to do prediction data (i.e. no labels). Text string like XdimxYdim, f.ex. 1280x1024  [default %default]",
+              dest = "pred_dim")
   )
 
 opt_parser <- OptionParser(option_list=option_list);
@@ -42,6 +45,13 @@ seg_size   <- opts$seg_size
 runmode    <- opts$runmode
 num_cores  <- opts$num_cores
 
+# Test wether a prediction material is to be made, i.e. no ground truth omap exists
+if(regexpr("^[0-9]*x[0-9]*$", opts$pred_dim)==1){
+  predictions <- TRUE
+  pred_width  <- as.integer(strsplit(opts$pred_dim, "x")[[1]][1])
+  pred_height <- as.integer(strsplit(opts$pred_dim, "x")[[1]][2])
+}
+
 # To normalize intensity and RGB-values to [0,1]
 rgb_max    <- 2^16
 intens_max <- 255
@@ -51,13 +61,14 @@ true_labels<- create_true_labels()
 
 # Traverse input dir and ensure output directories exists
 areas      <- dir(map_source)
-areas      <- areas[!areas %in% c("_laserdata", "_ytmodell", "_other")]
+areas      <- areas[!areas %in% c("laserdata", "ytmodell", "other","zlim.txt")]
 main_areas <- substr(areas,1,5)
 area_idx   <- 0
 las_zlim   <- read.delim(paste0(las_source,"zlim.txt"))
 write(paste("Started at", init_time_0,"\nFound ", length(areas), "areas to process."),
       stdout())
 if(!dir.exists(output_dir)) {dir.create(output_dir)}
+print(areas)
 
 for(area in areas){
   # Setup area specific variabels and check area is done already
@@ -79,20 +90,43 @@ for(area in areas){
   if(length(curr_las_zlim)==0) { curr_las_zlim <- setNames(c(0,250),c("min", "max")) }
   if(!dir.exists(curr_output)) { dir.create(curr_output) }
   
-  # Read Omap-png and create grid for lookup from that
-  premade_omap<- dir(curr_map_sc, ".Rdata", full.names = TRUE)
 
-  if(length(premade_omap) == 0){
+  # Create blank map if predictions are to be made
+  if(predictions){
+    omap <- data.table(expand.grid(list(pX = seq.int(1, pred_width), 
+                                        pY = seq.int(1, pred_height))),
+                       category = 99)
+    # Could be done nicer, mainly borrowed from the png_map_reader file
+    pred_mapname  <- sub(".pgw","",dir(curr_map_sc,pattern = ".pgw",full.names = TRUE))
+    map_trns <- .png_worldfile_to_transform_matrix(pred_mapname)
+    map_xy   <- data.table(as.matrix(cbind(omap[, .(pX,pY)], 1)) %*% map_trns)
+    
+    # Adds X and Y to map data.
+    omap[, c("X", "Y") := map_xy]
+    setcolorder(omap, c("X", "Y", "category", "pX", "pY"))
+    setkey(omap, X, Y)
+    
+    # Save data needed for later predictions gridding
+    pred_omap_data <- list(map = omap[c(1, nrow(omap)),], resolution = map_trns[1,1])
+    save(pred_omap_data, file = paste0(curr_map_sc, "pred_omap_data.Rdata"))
+  } else { 
+    # Read Omap-png and create grid for lookup from that
+    premade_omap<- dir(curr_map_sc, ".Rdata", full.names = TRUE)
+    
+    if(length(premade_omap) == 0){
       write("Creating map data", "")
       mapname     <- dir(curr_map_sc,".png$") 
       omap        <- png_map_reader(mapfile = paste0(curr_map_sc, mapname), 
                                     true_categories = true_labels)
       save(omap, file = paste0(area, "_omap.Rdata"))
       map_dt_plot(omap, colour = "cat_colour")
-  } else {
-    write(paste0("Loading map data from", premade_omap),"")
-    load(premade_omap[1])
+    } else {
+      write(paste0("Loading map data from", premade_omap),"")
+      load(premade_omap[1])
+    }
   }
+  # The omap_grid decides the segmentation but could be made from something else than
+  # a png file if necessary.
   omap_grid   <- map_grid_maker(omap, seg_size = seg_size)
   
   # To allow for running test mode with fewer segments, try and cast runmode as integer

@@ -47,10 +47,9 @@ png_map_reader <- function(mapfile, true_categories){
   xres     <- max(map_dt$pX)
   map_dt[, cats := apply(X = as.matrix(pdist(map_dt[,.(R,G,B)], true_categories[, .(R,G,B)])),
                     MARGIN = 1, FUN = which.min)]
-  Sys.time()
   map_dt[, catcl := sapply(seq_along(map_dt[,pX]), .pixel_surround_majority, 
                            map_dt = map_dt, weights = weights, yres = yres, xres = xres)]
-  Sys.time()
+  
   # Do the affine transform from pixels to coordinates
   map_xy   <- data.table(as.matrix(cbind(map_dt[, .(pX,pY)], 1)) %*% map_trns)
   

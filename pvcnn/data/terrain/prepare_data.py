@@ -15,24 +15,20 @@ from pandas import read_csv
 def prepare_label(data_dir, output_dir):
     # Handled in R: las_data_prep.R
 
-    # object_dict = {
-    #     'clutter': 0,
-    #     'ceiling': 1,
-    #     'floor': 2,
-    #     'wall': 3,
-    #     'beam': 4,
-    #     'column': 5,
-    #     'door': 6,
-    #     'window': 7,
-    #     'table': 8,
-    #     'chair': 9,
-    #     'sofa': 10,
-    #     'bookcase': 11,
-    #     'board': 12
-    # }
+    object_dict = {
+        'roads': 0,
+        'water': 1,
+        'marsh': 2,
+        'openland': 3,
+        'building': 4,
+        'trail': 5,
+        'medforest': 6,
+        'forest': 7,
+        'NA': 99
+        }
 
-    tldf = read_csv(data_dir + "/true_labels.csv", names=["category", "id"])
-    object_dict = dict(zip(list(tldf.category), list(tldf.id)))
+    #tldf = read_csv(data_dir + "/true_labels.csv", names=["category", "id"])
+    #object_dict = dict(zip(list(tldf.category), list(tldf.id)))
 
     for area in os.listdir(data_dir):
         path_area = os.path.join(data_dir, area)
@@ -126,7 +122,7 @@ def main():
 
     ## Tar in .npy-filerna och spottar ut hd5-filerna.
     areas = os.listdir(args.data_dir)
-    areas.remove("true_labels.csv")
+    #areas.remove("true_labels.csv")
     if args.last_area is not None and int(args.last_area) <= len(areas)+1:
         last_area = int(args.last_area)+1
     else:
