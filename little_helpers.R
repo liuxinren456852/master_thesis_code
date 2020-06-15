@@ -223,5 +223,3 @@ filtered_mode <- function(x, w, thresh){
 filtered_mean <- function(x, thresh){
   mean(x[x<=thresh])
 }
-
-classiou <- function(conf_mat){}

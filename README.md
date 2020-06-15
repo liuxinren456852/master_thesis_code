@@ -107,5 +107,50 @@ För att bara skapa prediktioner för ett datamaterial:
   6. Kör `pvcnn/train.py` med argumentet `--predict`.
   7. Kör `pvcnn_full_area_pred.R` med new_area-argumentet saqtt till TRUE, t.ex. `Rscript pvcnn_full_area_pred.R -p ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -m ~/master_thesis_code/kvarn_test -w 0.5 -n TRUE`. Detta ger en ny mapp `eval` under katalogen med predictions där kartorna finns.
 
-  
+## Filer
 
+Merparten av filerna har egna kommentarer och förklaringar, framförallt av des argument. Här följer dock en lite förklaring av vad de flesta av dem används till.
+
+### `dt_segment_lookup.R`
+
+Innehåller funktionsfabrikerna som används i `las_data_prep`, framförallt `dt_fuzzy_join_factory()` som returnerar en funktion som gör lookups i flera target-data från ett source-data. Innehåller även specifikationen för hur sammanslagningarna görs (t.ex. närmaste punkt (`dt_closest()`) eller medelvärde av omgivande `dt_sq_average()`).
+
+### `las_data_prep.R`
+
+Skript för att slå samman laserdata, ytmodell och orienteringskarta (om det inte är prediktionsdata som ska skapas i vilket fall dimensionerna på den tänkta orienteringskartan anges under `-p`-argumentet).
+
+### `las_from_npy.R`
+
+Används för att skapa las-filer från en samling npy-filer. Främst tänkt för att lagra de färdigsammanslagna data i ett format som kan visualiseras eller användas för att skapa nya material.
+
+### `las_reader.R`
+
+Hjälpfunktioner för inläsningen av las-filer i `las_data_prep.R`.
+
+### `little_helpers.R`
+
+Diverse små plotfunktioner mm som används lite här och var i olika skript.
+
+### `map_grid_maker.R`
+
+Innehåller funktionen som skapa en grid av segment från en orienteringskarta.
+
+### `MLR.R`
+
+Script för att ta ett antal las-filer, dela in dem i voxlar och köra multipel logistisk regression på dessa. Sparar även undan såväl data som resultat och tar därför en del disk i anspråk (ca5-600mb) samt en del tid. Saknar indikator på hur långt skriptet kommit.b
+
+### `npy_label_remaker.R`
+
+Script för att ta bort en etikett i ett färdigsammanslaget material. Ser till att etiketterna som är kvar är i följd även om det egentligen inte behövs.
+
+### `omap_segment_extraction.R`
+
+
+
+### `.R`
+
+### `.R`
+
+### `.R`
+
+### `.R`
