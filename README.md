@@ -107,7 +107,7 @@ För att bara skapa prediktioner för ett datamaterial:
   6. Kör `pvcnn/train.py` med argumentet `--predict`.
   7. Kör `pvcnn_full_area_pred.R` med new_area-argumentet saqtt till TRUE, t.ex. `Rscript pvcnn_full_area_pred.R -p ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -m ~/master_thesis_code/kvarn_test -w 0.5 -n TRUE`. Detta ger en ny mapp `eval` under katalogen med predictions där kartorna finns.
 
-## Filer
+## R-Filer
 
 Merparten av filerna har egna kommentarer och förklaringar, framförallt av des argument. Här följer dock en lite förklaring av vad de flesta av dem används till.
 
@@ -190,3 +190,26 @@ Innehåller funktioner för att skapa mappningen mellan fägkoder och kategorier
 ### `.R`
 
 
+## Python-filer
+
+Eftersom jag inte skrivit alla filerna i PVCNN vill jag inte kommentera dem för mycket utan fokuserar på de saker som är viktiga för arbetet i uppsatsen. Sökvägarna är relativt `pvcnn/`.
+
+### `train.py`
+
+Huvudfilen som trots namnet även används för utvärdering (`--evaluation`) och prediktioner (`--predictions`). Har jmf originalet byggts ut för att skapa punktprediktioner huvudsakligen genom att kopiera beteendet för modellutvärdering. 
+
+### `data/terrain/prepare_data.py`
+
+Scriptet som skapar h5-filer från npy-filerna som `las_data_prep.R` skapar. Hade kunnat skippas med en annan dataLoader (som då hade agerat direkt på npy-filerna), i synnerhet för för prediktionerna, men skapar överlappande block och samplar om punkterna så inalles är den nog fördelaktig för träningen. 
+
+### `configs/...`
+
+Inställningarna för modellerna sätts i en hierarkisk struktur där saker som slumpfrö och rotkatalog för data sätts högt upp och gäller alla modeller och testområden medan förlustfunktionsvikter, voxelupplösning och batchstorlek sätts längre ner för varje enskild modell. Om `train.py` ger märkliga felmeddelanden och till slut hänvisar till `utils/config.py` har du satt ett oacceptabelt värde i någon config-fil under `configs/`.
+
+### `evaluate/terrain/eval.py`
+
+Innehåller funktionen som används för att utvärdera modellen på hela valideringsdata (och inte bara ett sample som görs i varje iteration). Innehåller kod för att göra ogjort den resampling som `data/terrain/prepare_data.py` och därmed avgöra vilken punkt en prediktion gäller som behöver fixas om man bygger en ny dataLoader. Värt att notera är även att varje punkt utvärderas flera gånger och den prediktion som högst konfidens är den som används. Kategorierna är även hårdkodade i filen vilket behöver hanteras om man byter data. Laddar in label-filen för att jämföra med så denna måste finnas i varje segments katalog för att utvärdering ska kunna köras.
+
+### `predict/terrain/pred.py`
+
+I stort sett samma fil som `evaluate/terrain/eval.py` men modifierad för att läsa in xyzrgb-filen för varje segment istället samt producera npy-filer med prediktioner och entropi för varje ensklid punkt istället. Raderna 138-139 kan behöva avkommenteras och 140-144 kommenteras om man ska köra prediktioner på  träningskartorna då dessa gjordes utan att .dataset-markören innehåller antalet punkter i segmentet. Detta är fixat i senare versioner av `las_data_prep.R`.

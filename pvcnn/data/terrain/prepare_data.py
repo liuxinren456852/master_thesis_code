@@ -94,7 +94,7 @@ def main():
                         help=f'Folder to write labels (default is {default_output_dir})')
     parser.add_argument('-o', '--h5folder', dest='h5output_dir', default=default_h5output_dir,
                         help=f'Folder to write h5-files (default is {default_h5output_dir})')
-    parser.add_argument('--max_num_points', '-m', help='Max point number of each sample', type=int, default=4096) #ändrat för färre segment
+    parser.add_argument('--max_num_points', '-m', help='Max point number of each sample', type=int, default=8196) #ändrat för färre segment
     parser.add_argument('--block_size', '-b', help='Block size', type=float, default=20) # lower resolution
     parser.add_argument('--grid_size', '-g', help='Grid size', type=float, default=0.03)
     parser.add_argument('--save_ply', '-s', help='Convert .pts to .ply', action='store_true')
