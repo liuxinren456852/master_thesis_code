@@ -188,4 +188,4 @@ for(area in pred_areas){
             units = "in")
   }  
 }
-#area_grouped[, `:=`(Xpix = Xpix/round_mult, Ypix = Ypix/round_mult)]
+

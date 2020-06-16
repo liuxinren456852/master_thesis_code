@@ -135,6 +135,10 @@ Diverse små plotfunktioner mm som används lite här och var i olika skript.
 
 Innehåller funktionen som skapa en grid av segment från en orienteringskarta.
 
+### `model_comp.R`
+
+Script för att skapa tabellerna i modelljämförelsekapitlet i uppsatsen. Själva siffrorna kommer från confusion-matrix-printen i slutet av `pvcnn_pred_grid_compare.R`.
+
 ### `MLR.R`
 
 Script för att ta ett antal las-filer, dela in dem i voxlar och köra multipel logistisk regression på dessa. Sparar även undan såväl data som resultat och tar därför en del disk i anspråk (ca5-600mb) samt en del tid. Saknar indikator på hur långt skriptet kommit.b
@@ -145,12 +149,44 @@ Script för att ta bort en etikett i ett färdigsammanslaget material. Ser till 
 
 ### `omap_segment_extraction.R`
 
+Nödlösningsscript för att ta ut klassfördelning ur orienteringskartorna givet output från `test_split.R`.
 
+### `omap_stats_maker.R`
+
+Räknar storlek och klassfördelning för orienteringskartorna, sparar deta i en .csv som ka användas för diagram etc.
+
+### `png_map_reader.R`
+
+Innehåller alla funktioner för att läsa in, rensa och spara undan orienteringskartorna från png-filer.
+
+### `pred_plots.R`
+
+Script för att skapa 3-i-1-resultatkartorna i uppsatsen, t.ex. figur 5.1, givet output från `pvcnn_full_area_pred.R`.
+
+### `pvcnn_full_area_pred.R`
+
+Beräknar griddade prediktioner för hela kartor för olika entropi-nivåer. Sparar undan plottar av prediktionerna och entropi.
+
+### `pvcnn-pred_grid_analysis.R`
+
+Diverse småscript, bl.a. analysen av punkttäthetens effekt. Inte vidare strukturerat utan merparten "fulhack" då det bestämdes ganska sent hur den analyses skulle göras.
+
+### `pvcnn-pred_grid_compare.R`
+
+Script för att jämföra prediktionerna med orienteringskartorna for olika entropinivåer. Sparar undan prediktioner och confusion-matriser.
+
+### `seg_list_writer.R`
+
+Innehåller funktionen som sparar undan sammanfogad data som npy-filer. Motsvarar till viss del första delen av `pvcnn/data/terrain/prepare_data.py`.
+
+### `test_split.R`
+
+Script för att dela in segment i test, träning och valideringsdata. Skapar ny Areas för test resp. valideringsdata. Plottar även antalet segment i vardera mängd och område samt sparar totalerna.
+
+### `true_colour_codes.R`
+
+Innehåller funktioner för att skapa mappningen mellan fägkoder och kategorier samt för att plotta denna.
 
 ### `.R`
 
-### `.R`
 
-### `.R`
-
-### `.R`

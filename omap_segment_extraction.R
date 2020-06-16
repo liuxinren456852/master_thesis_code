@@ -4,7 +4,7 @@ option_list <- list(
   make_option(c("-m", "--source_dir"), type="character", default="omap_stats/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "source_dir"),
-  make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/omap_corrected/"),
+  make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/omap_corrected2/"),
               help = "Directory where to output treated files. [default %default]",
               dest = "output_dir"),
   make_option(c("-s", "--seg_size"), type = "integer", default = 120,
@@ -31,7 +31,7 @@ vsegs <- readLines("valid_segs.txt")
 suppressPackageStartupMessages(library(stringr))
 split_tseg  <- str_match(string = tsegs, pattern = "Area\\_([0-9]{1,2})\\_segment\\_([0-9]{2,3})")
 split_vseg  <- str_match(string = vsegs, pattern = "Area\\_([0-9]{1,2})\\_segment\\_([0-9]{2,3})")
-area_ids <- as.integer(unique(split_seg[,2]))
+area_ids <- as.integer(unique(split_tseg[,2]))
 area_tsegs <- area_vsegs <-vector("list", length = length(area_ids))
 
 for(area in area_ids){
@@ -59,8 +59,8 @@ for(area in areas){
   if(!dir.exists(curr_output)) {dir.create(curr_output)}
   
   # Read Omap-png and create grid for lookup from that
-  mapname    <- dir(curr_source,".png$") 
-  omap       <- png_map_reader(mapfile = paste0(curr_source, mapname), 
+  mapname    <- dir(curr_source,".png$", full.names = TRUE) 
+  omap       <- png_map_reader(mapfile = mapname, 
                                true_categories = true_labels)
   
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
