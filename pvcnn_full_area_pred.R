@@ -11,8 +11,8 @@ option_list <- list(
   make_option(c("-w", "--width"), type = "double", default = c(0.25,0.5,1),
               help = "Width multiplier whose predictions should be evaluated [default 0.25, 0.5, 1]",
               dest = "width"),
-  make_option(c("-e", "--entropy_limit"), type = "double", default = c(0.8,1.0,1.2,1.4,1.6),
-              help = "Maximum entropy for points to be considered in grid classification [default 0.8 - 1.6 in steps of 0.2]",
+  make_option(c("-e", "--entropy_limit"), type = "double", default = c(0.8,1.2,1.6),
+              help = "Maximum entropy for points to be considered in grid classification [default 0.8 - 1.6 in steps of 0.4]",
               dest = "entropy_limit"),
   make_option(c("-a", "--area"), type = "character", default = NULL,
               help = "Area for which to do predictions [default %default]",
@@ -33,7 +33,7 @@ suppressPackageStartupMessages(library("patchwork"))
 na_colour <- "grey70"
 theme_set(theme_grey()+  
             theme(panel.background = element_rect(fill = na_colour),
-                  panel.border = element_rect(fill = "transparent", colour = "black", size = 1.5),
+                  panel.border = element_blank(),
                   legend.position = "none", legend.title = element_blank(),
                   axis.title = element_blank(), axis.text = element_blank(),
                   axis.ticks = element_blank(), panel.grid = element_blank()))
@@ -46,7 +46,7 @@ source("true_colour_codes.R")
 load("hdpintervals.Rdata")
 true_labels <- create_true_labels()
 round_mult  <- 100 
-setDTthreads(threads = 3)
+setDTthreads(threads = 10)
 
 # Get all omap data into list for late comparison
 omaps <- dir(opts$omap_dir, full.names = TRUE)
@@ -54,6 +54,7 @@ omaps <- dir(opts$omap_dir, full.names = TRUE)
 area_omaps <- vector("list", length = length(omaps))
 write("Loading omaps","")
 omap_pb <- txtProgressBar(0,length(area_omaps),width = 10,style = 3)
+
 if(!opts$new_area){
   # Handle predictions for areas used in training
 
@@ -105,9 +106,18 @@ for(area in pred_areas){
   area_ymin  <- min(area_omap$Y)
   area_xmax  <- max(area_omap$X)
   area_ymax  <- max(area_omap$Y)
+  area_width <- length(unique(area_omap$X))
+  area_height<- length(unique(area_omap$Y))
   
   save_dir   <- paste0(opts$pred_dir,curr_area_id, "/eval/")
-  if(!dir.exists(save_dir)){ dir.create(save_dir) }
+  # Assuming that area is evaluated if the eval-dir exists. For simplified restart amon others
+  if(!dir.exists(save_dir)){ 
+    dir.create(save_dir) 
+  } else { 
+    write("Area done, skipping!\n",""); 
+    next
+  }
+  
   map_name   <- area_names[area_id == curr_area_id, area]
   segs       <- dir(area, full.names = TRUE)
   segs       <- segs[grepl("segment\\_[0-9]{1,3}", segs)]
@@ -147,8 +157,13 @@ for(area in pred_areas){
       entropy_limit <- opts$entropy_limit[ent_id]
       ent_pfx       <- gsub("\\.", "p", entropy_limit)
       ent_points    <- points[entropy <= entropy_limit, ]
-      group_pts[[ent_id]]  <- ent_points[, .(pred_cat = weighed_mode(prediction, entropy)), 
-                                         by =c("Xpix", "Ypix") ]
+
+      # the below serves as an example of how to wrangle data correctly. First solution takes 45min per area, second takes 25sec
+      #group_pts[[ent_id]]  <- ent_points[, .(pred_cat = weighed_mode(prediction, entropy)), 
+      #                                   by =c("Xpix", "Ypix") ]
+      ent_points_w  <- ent_points[, .(mean_ent=mean(entropy)), by =c("Xpix", "Ypix","prediction")]
+      group_pts[[ent_id]]  <- ent_points_w[, .(pred_cat = prediction[which.min(mean_ent)]) ,by =c("Xpix", "Ypix")]
+      
       setkey(group_pts[[ent_id]], Xpix, Ypix)
       
       mapplot <- ggplot(group_pts[[ent_id]], aes(x=Xpix, y=Ypix, fill = pred_cat)) +
@@ -159,9 +174,9 @@ for(area in pred_areas){
           label = setNames(as.character(true_labels$category),
                            true_labels$ID),aesthetics =c("colour", "fill")
         ) +
-        no_xexpand + no_yexpand 
-      ggsave(filename = paste0(save_dir,prefix, "_e",ent_pfx,"_predicts.pdf"), plot = mapplot,
-             units = "in")
+        no_xexpand + no_yexpand
+      ggsave(filename = paste0(save_dir,prefix, "_e",ent_pfx,"_predicts.tiff"), plot = mapplot,
+             units = "in", dpi = 72, width= area_width/72, height = area_height/72)
       
       setnames(group_pts[[ent_id]], "pred_cat", paste0("pred_cat", ent_pfx))
       setTxtProgressBar(ent_pb, ent_id)
@@ -173,6 +188,7 @@ for(area in pred_areas){
     area_grouped  <- area_grouped[group_ent, all=TRUE]
     area_grouped  <- area_grouped[area_omap, all=TRUE]
     save(area_grouped, file = paste0(save_dir,prefix,".Rdata"))
+    fwrite(area_grouped, file = paste0(save_dir,prefix,".csv"))
     
     entplot <- ggplot(group_ent, aes(x=Xpix, y=Ypix, fill = mean_entropy)) +
       geom_tile()  +
@@ -184,8 +200,8 @@ for(area in pred_areas){
         limits = c(0, 2), aesthetics =c("colour", "fill")
       )  +
       no_xexpand + no_yexpand 
-    ggsave(filename = paste0(save_dir,prefix, "_e",ent_pfx,"_entropy.pdf"), plot = entplot,
-            units = "in")
+    ggsave(filename = paste0(save_dir,prefix, "_e",ent_pfx,"_entropy.tiff"), plot = entplot,
+            units = "in", dpi = 72, width= area_width/72, height = area_height/72)
   }  
 }
 
