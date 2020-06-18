@@ -1,10 +1,10 @@
 suppressPackageStartupMessages(library("optparse"))
 
 option_list <- list( 
-  make_option(c("-m", "--source_dir"), type="character", default="omap_stats/", 
+  make_option(c("-m", "--source_dir"), type="character", default="omap_cleaned/", 
               help="Directory where source maps are located as subfolders [default %default]",
               dest = "source_dir"),
-  make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/omap_corrected2/"),
+  make_option(c("-o", "--output_dir"), type = "character", default = paste0(getwd(), "/omap_cleaned/"),
               help = "Directory where to output treated files. [default %default]",
               dest = "output_dir"),
   make_option(c("-s", "--seg_size"), type = "integer", default = 120,
@@ -59,24 +59,48 @@ for(area in areas){
   if(!dir.exists(curr_output)) {dir.create(curr_output)}
   
   # Read Omap-png and create grid for lookup from that
-  mapname    <- dir(curr_source,".png$", full.names = TRUE) 
-  omap       <- png_map_reader(mapfile = mapname, 
-                               true_categories = true_labels)
+  premade_omap<- dir(curr_source, ".Rdata", full.names = TRUE)
+  
+  if(length(premade_omap) == 0){
+    write("Creating map data", "")
+    mapname     <- dir(curr_map_sc,".png$") 
+    omap        <- png_map_reader(mapfile = paste0(curr_map_sc, mapname), 
+                                  true_categories = true_labels)
+    save(omap, file = paste0(area, "_omap.Rdata"))
+    map_dt_plot(omap, colour = "cat_colour")
+  } else {
+    write(paste0("Loading map data from", premade_omap),"")
+    load(premade_omap[1])
+  }
   
   omap_grid  <- map_grid_maker(omap, seg_size = seg_size)
   test_grid  <- omap_grid[rownum %in% area_tsegs[[area_idx]]]
   valid_grid <- omap_grid[rownum %in% area_vsegs[[area_idx]]]
   
-  test_segs  <- .dt_subset(test_grid, omap)
-  valid_segs <- .dt_subset(valid_grid, omap)
+  omap[, set_id := "Training"]
   
+  for(trow in 1:nrow(test_grid)){
+    omap[X %between% c(test_grid[trow,xmin],test_grid[trow,xmax])  &
+           Y %between% c(test_grid[trow,ymin],test_grid[trow,ymax]), set_id := "Test"]  
+  }
+  for(vrow in 1:nrow(valid_grid)){
+    omap[X %between% c(valid_grid[vrow,xmin],valid_grid[vrow,xmax])  &
+           Y %between% c(valid_grid[vrow,ymin],valid_grid[vrow,ymax]), set_id := "Validation"]  
+  }
+  #table(omap$set_id)
+  #test_segs  <- .dt_subset(test_grid, omap)
+  #valid_segs <- .dt_subset(valid_grid, omap)
+  
+  fills <- setNames(viridisLite::viridis(3), c("Training", "Validation", "Test"))
+  omap[, set_colour := fills[set_id]]
+  save(omap, file = paste0(area, "_omap.Rdata"))
   # save map the map to file and copy world file
-  map_dt_plot(omap, colour = "cat_colour", dirname = paste0(curr_output, area))
-  file.copy(from = dir(path = curr_source, pattern = ".pgw$", full.names = TRUE), 
-            to = paste0(curr_output, area, "_cat_colour_map.pgw"))
+  map_dt_plot(omap, colour = "set_colour", dirname = paste0(curr_output,"split"))
+  #file.copy(from = dir(path = curr_source, pattern = ".pgw$", full.names = TRUE), 
+  #          to = paste0(curr_output, area, "_cat_colour_map.pgw"))
   
-  area_segs[[area]] <- list("tg" = test_grid, "ts" = test_segs, 
-                            "vg" = valid_grid, "vs" = valid_segs)
+  #area_segs[[area]] <- list("tg" = test_grid, "ts" = test_segs, 
+  #                          "vg" = valid_grid, "vs" = valid_segs)
   
 }
 
