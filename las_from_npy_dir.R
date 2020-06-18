@@ -15,7 +15,10 @@ option_list <- list(
               dest = "test_area"),
   make_option(c("-v", "--valid_area"), type = "character", default="Area_16", 
               help="Area name for test area [default %default]",
-              dest = "valid_area")
+              dest = "valid_area"),
+  make_option(c("-f", "--file_name"), type = "character", default="label", 
+              help="File ame to be read in as labels [default %default]",
+              dest = "file_name")
 )
 
 source("true_colour_codes.R")
@@ -40,13 +43,13 @@ for(area in areas){
   area_name  <- sub(opts$npy_source, "", area)
   area_id    <- area_id + 1
   write(paste("Processing", area_name), stdout())
-  segments   <- dir(area, full.names = TRUE)
+  segments   <- dir(area, full.names = TRUE, pattern = "^Segment")
   nseg       <- length(segments)
   seg_all    <- vector("list", nseg)
   seg_id     <- 1
   for( seg in segments){
     seg_xyz    <- npyLoad(paste0(seg, "/xyzrgb.npy"))
-    seg_lab    <- npyLoad(paste0(seg,"/label.npy"))
+    seg_lab    <- npyLoad(paste0(seg,"/", opts$file_name, ".npy"))
     seg_all[[seg_id]]<- as.data.table(cbind(seg_xyz, seg_lab))
     seg_id     <- seg_id + 1
   }
