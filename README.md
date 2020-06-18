@@ -3,6 +3,10 @@ title: "Framkomlighetsrapport - dokumentation"
 author: "Gustav Lundberg"
 date: '2020-06-05'
 ---
+## Bakgrund
+
+Exjobb/Masteruppsats för MTO vt2020. Handledare MTO är Peter Svenmarck och på EOsystem Maria Axelsson.
+
 ## Antaganden och pre-reqs
 
 Denna dokumentation utgår från att Linux körs och alla sökvägar är relativt den som dokumentationen finns i. Det hela \textit{borde} fungera på Windows också men det har inte testats.
@@ -38,7 +42,9 @@ Utöver dessa rekommenderas CUDA >= 10.2 för att kunna köra modellerna på GPU
 Dessa finns i fyra "nivåer":
 
 \paragraph{Råa orienteringskartor}
-Lagras  i `/ocd_kartor` dels som `.ocd` som är de kartor som Marcus Henriksson gav och dels som `.omap` som är de förenklade kartorna från vilka png-filerna exporteras. Kräver [OpenOrienteeringMapper](https://www.openorienteering.org/apps/mapper/) (OOM) för att hantera.
+Lagras  i `/ocd_kartor` dels som `.ocd` som är de kartor som Markus Henriksson gav och dels som `.omap` som är de förenklade kartorna från vilka png-filerna exporteras. Kräver [OpenOrienteeringMapper](https://www.openorienteering.org/apps/mapper/) (OOM) för att hantera.
+
+I OOM öppnar man en .ocd-karta och väljer `Symbols -> Replace Symbols Set` för att byta ut mappningen,  oh därefter döljs de kategorier 
 
 \paragraph{.png exporter}
 Finns i `/kartor` och är de oredigerade exporterna från OOM samt tillhörande world-fil (`.pgw`) med koordinater.
@@ -70,8 +76,9 @@ Databehandlingen illustreras i figur 2.8 i rapporten, men kortfattat är stegen:
   1. Exportera en png-karta med tillhörande pgw-fil från OOM
   2. Ladda ner motsvarande laserdata och ytmodell
   3. Kör `las_data_prep.R` för att sammanfoga data
-  4. Kör `pvcnn/data/terrain/prepare_data.py` för att skapa h5-filer
-  5. Kör `pvcnn/train.py` för att träna modellen.
+  4. Dela upp i test och validering med `test_split.R` för att få ytterligare två areas som motsvarar validering och test (Area_15 resp Area_16 i de data som använts i uppsatsen)
+  5. Kör `pvcnn/data/terrain/prepare_data.py` för att skapa h5-filer
+  6. Kör `pvcnn/train.py` för att träna modellen.
 
 ## Modellutvärdering
 
@@ -103,9 +110,9 @@ För att bara skapa prediktioner för ett datamaterial:
   2. Ladda ner motsvarande laserdata och ytmodell och lägg i en katalog med de första fem tecknen från pgw-filen. 
   3. Kör `las_data_prep.R` för att sammanfoga data t.ex. `Rscript las_data_prep.R -m ~/master_thesis_code/kvarn_test/ -o ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -l /media/gustav/storage/laslager/ -p 600x300`. -p argumentet bestämmer hur många pixlar som ska finnas i dummy-data. multipliceras med rad 1 resp 4 i .pgw-filen för att få områdets dimensioner.
   4. Kör `pvcnn/data/terrain/prepare_data.py` för att skapa h5-filer. Sätt argumenten `-f`, `-d` och `-o` till samma sökväg som `-o` i steg 3.
-  5. Se till att rätt area-nummer sätts som test-area i `pvcnn/configs/terrain/[modell]/test_area/__init__.py` samt rätt datakälla i `pvcnn/configs/terrain/__init__.py` (raden `configs.predict.root`). Ta bort `.area`-filen under varje Area-katalog.
+  5. Se till att rätt area-nummer sätts som test-area i `pvcnn/configs/terrain/[modell]/test_area/__init__.py` (raden `configs.dataset.holdout_area`) samt rätt datakälla i `pvcnn/configs/terrain/__init__.py` (raden `configs.predict.root`). Ta bort `.area`-filen under varje Area-katalog.
   6. Kör `pvcnn/train.py` med argumentet `--predict`.
-  7. Kör `pvcnn_full_area_pred.R` med new_area-argumentet saqtt till TRUE, t.ex. `Rscript pvcnn_full_area_pred.R -p ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -m ~/master_thesis_code/kvarn_test -w 0.5 -n TRUE`. Detta ger en ny mapp `eval` under katalogen med predictions där kartorna finns.
+  7. Kör `pvcnn_full_area_pred.R` med new_area-argumentet satt till TRUE, t.ex. `Rscript pvcnn_full_area_pred.R -p ~/master_thesis_code/pvcnn/data/terrain/kvarn_test_out/ -m ~/master_thesis_code/kvarn_test -w 0.5 -n TRUE`. Detta ger en ny mapp `eval` under katalogen med predictions där kartorna finns.
 
 ## R-Filer
 
@@ -167,11 +174,11 @@ Script för att skapa 3-i-1-resultatkartorna i uppsatsen, t.ex. figur 5.1, givet
 
 Beräknar griddade prediktioner för hela kartor för olika entropi-nivåer. Sparar undan plottar av prediktionerna och entropi.
 
-### `pvcnn-pred_grid_analysis.R`
+### `pvcnn_pred_grid_analysis.R`
 
 Diverse småscript, bl.a. analysen av punkttäthetens effekt. Inte vidare strukturerat utan merparten "fulhack" då det bestämdes ganska sent hur den analyses skulle göras.
 
-### `pvcnn-pred_grid_compare.R`
+### `pvcnn_pred_grid_compare.R`
 
 Script för att jämföra prediktionerna med orienteringskartorna for olika entropinivåer. Sparar undan prediktioner och confusion-matriser.
 
@@ -186,9 +193,6 @@ Script för att dela in segment i test, träning och valideringsdata. Skapar ny 
 ### `true_colour_codes.R`
 
 Innehåller funktioner för att skapa mappningen mellan fägkoder och kategorier samt för att plotta denna.
-
-### `.R`
-
 
 ## Python-filer
 
@@ -206,6 +210,8 @@ Scriptet som skapar h5-filer från npy-filerna som `las_data_prep.R` skapar. Had
 
 Inställningarna för modellerna sätts i en hierarkisk struktur där saker som slumpfrö och rotkatalog för data sätts högt upp och gäller alla modeller och testområden medan förlustfunktionsvikter, voxelupplösning och batchstorlek sätts längre ner för varje enskild modell. Om `train.py` ger märkliga felmeddelanden och till slut hänvisar till `utils/config.py` har du satt ett oacceptabelt värde i någon config-fil under `configs/`.
 
+Här sätts också vilken area som är test och validering i `__init__.py` under `.../test_area/`. Configfilen bestämmer vidare vilken modell som körs (PVCNN, PVCNN++ etc).
+
 ### `evaluate/terrain/eval.py`
 
 Innehåller funktionen som används för att utvärdera modellen på hela valideringsdata (och inte bara ett sample som görs i varje iteration). Innehåller kod för att göra ogjort den resampling som `data/terrain/prepare_data.py` och därmed avgöra vilken punkt en prediktion gäller som behöver fixas om man bygger en ny dataLoader. Värt att notera är även att varje punkt utvärderas flera gånger och den prediktion som högst konfidens är den som används. Kategorierna är även hårdkodade i filen vilket behöver hanteras om man byter data. Laddar in label-filen för att jämföra med så denna måste finnas i varje segments katalog för att utvärdering ska kunna köras.
@@ -213,3 +219,39 @@ Innehåller funktionen som används för att utvärdera modellen på hela valide
 ### `predict/terrain/pred.py`
 
 I stort sett samma fil som `evaluate/terrain/eval.py` men modifierad för att läsa in xyzrgb-filen för varje segment istället samt producera npy-filer med prediktioner och entropi för varje ensklid punkt istället. Raderna 138-139 kan behöva avkommenteras och 140-144 kommenteras om man ska köra prediktioner på  träningskartorna då dessa gjordes utan att .dataset-markören innehåller antalet punkter i segmentet. Detta är fixat i senare versioner av `las_data_prep.R`.
+
+## Data
+
+Sökvägarna här är relativt `master_thesis_code/` på disken som avänts i exjobbet.
+
+### `hdpintervals.RData`
+
+Innehåller data-frame med gränserna inom vilka det är dubbel upplösning i laserdata. 
+
+### `/runs/`
+
+Innehåller alla epoker för alla modeller och inte bara den bästa (som även finns under `pvcnn/runs/` och är den som körs när man kör `train.py`).
+
+### `/laslager/`
+
+De laserdata och ytmodeller som använts i exjobbet
+
+### `/data/area_output2/`
+
+Resultatet av `las_data_prep.R` och `test_split.R`. D.v.s. den data som använts för träning, validering och test i uppsatsen.
+
+### `/data/las_output2/`
+
+Sammanfogade las-filer från den aggregerade datan i `area_output2/`.
+
+### `/data/area_output_notsplit/` samt `/data/las_output_notsplit/`
+
+Som ovan men innan uppdeling i test och träningsdata. Således är kartorna "hela" i de här mapparna.
+
+### `omap_cleaned/`
+
+Innehåller dels de "rättade" kartorna som nämnt ovan, men även prediktionerna griddade samt bilder av detta för olika modeller och olika entropigränser. Här finns även en separat png-fil som är en mask för vilka segment (och därmed pixlar) som använts i träning, validering och test. Träningssegment är mörkblå och test är gula.
+
+### `pvcnn/data/terrain/h5_notsplit/[område]`
+
+Innehåller punktprediktioner för varje punkti ursprungskartorna samt sammanställd data för detta under  `eval/` i respektive mapp.
