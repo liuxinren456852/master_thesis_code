@@ -5,7 +5,7 @@ date: '2020-06-05'
 ---
 ## Bakgrund
 
-Exjobb/Masteruppsats för MTO vt2020. Handledare MTO är Peter Svenmarck och på EOsystem Maria Axelsson.
+Exjobb/Masteruppsats för MTO vt2020. Handledare MTO är Peter Svenmarck och på EOsystem Maria Axelsson. Rapporten i sin slutgiltiga form finns på [DIVA](http://urn.kb.se/resolve?urn=urn:nbn:se:liu:diva-170759).
 
 ## Antaganden och pre-reqs
 
